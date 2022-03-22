@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.31911.260
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Narumikazuchi.GroupManager", "Narumikazuchi.GroupManager\Narumikazuchi.GroupManager.csproj", "{6062488A-B722-4F4E-881E-21AF149ED54A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Narumikazuchi.GroupManager", "Narumikazuchi.GroupManager\Narumikazuchi.GroupManager.csproj", "{6062488A-B722-4F4E-881E-21AF149ED54A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "submodules", "submodules", "{6A7CF7F7-898A-48FD-B4AD-CECD6B59883C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Narumikazuchi.Windows", "submodules\Narumikazuchi.Windows\Narumikazuchi.Windows.csproj", "{0C792E59-74C4-4A19-B7A1-5FA66848B7BA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,9 +19,16 @@ Global
 		{6062488A-B722-4F4E-881E-21AF149ED54A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6062488A-B722-4F4E-881E-21AF149ED54A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6062488A-B722-4F4E-881E-21AF149ED54A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C792E59-74C4-4A19-B7A1-5FA66848B7BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C792E59-74C4-4A19-B7A1-5FA66848B7BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C792E59-74C4-4A19-B7A1-5FA66848B7BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C792E59-74C4-4A19-B7A1-5FA66848B7BA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0C792E59-74C4-4A19-B7A1-5FA66848B7BA} = {6A7CF7F7-898A-48FD-B4AD-CECD6B59883C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {69DD5FE3-93EF-4D96-BB50-F46FF01DB065}
