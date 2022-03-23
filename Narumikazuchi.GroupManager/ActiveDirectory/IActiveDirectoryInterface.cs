@@ -15,7 +15,7 @@ public interface IActiveDirectoryInterface
 
     public Boolean TryGetObjectsFilteredBy([DisallowNull] DirectoryEntry ou,
                                            [DisallowNull] String filter,
-                                           [NotNullWhen(true)] out IEnumerable<DirectoryEntry>? directoryObjects);
+                                           [NotNullWhen(true)] out IEnumerable<DirectoryEntry>? adsObjects);
 
     public Boolean TryAddObjectToGroup([DisallowNull] DirectoryEntry group,
                                        [DisallowNull] String objectDn);
@@ -23,6 +23,6 @@ public interface IActiveDirectoryInterface
     public Boolean TryRemoveObjectFromGroup([DisallowNull] DirectoryEntry group,
                                             [DisallowNull] String objectDn);
 
-    public IReadOnlyList<String> CastPropertyToStringArray([DisallowNull] DirectoryEntry directoryObject,
+    public IReadOnlyList<String> CastPropertyToStringArray([DisallowNull] DirectoryEntry adsObjects,
                                                            [DisallowNull] String property);
 }

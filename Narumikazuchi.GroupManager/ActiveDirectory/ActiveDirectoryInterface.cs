@@ -43,20 +43,20 @@ partial class ActiveDirectoryInterface
 // IActiveDirectoryInterface
 partial class ActiveDirectoryInterface : IActiveDirectoryInterface
 {
-    public IReadOnlyList<String> CastPropertyToStringArray([DisallowNull] DirectoryEntry directoryObject!!,
+    public IReadOnlyList<String> CastPropertyToStringArray([DisallowNull] DirectoryEntry adsObject!!,
                                                            [DisallowNull] String property!!)
     {
         List<String> result = new();
-        if (directoryObject.Properties[property] is null)
+        if (adsObject.Properties[property] is null)
         {
             return Array.Empty<String>();
         }
 
-        if (directoryObject.Properties[property].Value is Object[] array)
+        if (adsObject.Properties[property].Value is Object[] array)
         {
             result.AddRange(CastObjectArrayToStringArray(array));
         }
-        else if (directoryObject.Properties[property].Value is String value)
+        else if (adsObject.Properties[property].Value is String value)
         {
             result.Add(value);
         }
@@ -108,7 +108,7 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
         String groupManager = user.Path
                                   .ToString()
                                   .Remove(0, 7);
-        List<String> groupNames = new(this.CastPropertyToStringArray(directoryObject: user,
+        List<String> groupNames = new(this.CastPropertyToStringArray(adsObject: user,
                                                                      property: "memberOf"))
         {
             groupManager
@@ -150,11 +150,11 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
 
     public Boolean TryGetObjectsFilteredBy([DisallowNull] DirectoryEntry ou!!,
                                            [DisallowNull] String filter!!,
-                                           [NotNullWhen(true)] out IEnumerable<DirectoryEntry>? directoryObjects)
+                                           [NotNullWhen(true)] out IEnumerable<DirectoryEntry>? adsObjects)
     {
         if (String.IsNullOrWhiteSpace(filter))
         {
-            directoryObjects = null;
+            adsObjects = null;
             // Write to log
             return false;
         }
@@ -162,7 +162,7 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
         String[] items = filter.Split(separator: new Char[] { ' ', ',' },
                                       options: StringSplitOptions.RemoveEmptyEntries);
 
-        directoryObjects = new List<DirectoryEntry>();
+        adsObjects = new List<DirectoryEntry>();
 
         try
         {
@@ -179,7 +179,7 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
                 {
                     tempResults.Add(result.GetDirectoryEntry());
                 }
-                directoryObjects = directoryObjects.Intersect(second: tempResults,
+                adsObjects = adsObjects.Intersect(second: tempResults,
                                                               comparer: DirectoryEntryComparer.Default);
             }
         }
