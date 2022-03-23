@@ -74,9 +74,10 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
             group.CommitChanges();
             return true;
         }
-        catch
+        catch (Exception ex)
         {
-            // Write to log
+            TextLogger.Instance
+                      .Log(ex);
             return false;
         }
     }
@@ -90,7 +91,8 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
                                              user: out DirectoryEntry? user))
         {
             groups = null;
-            // Write to log
+            TextLogger.Instance
+                      .Log("Couldn't get groups because the user with the specified sAMAccountName couldn't be found.");
             return false;
         }
 
@@ -137,10 +139,11 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
                 group.Dispose();
             }
         }
-        catch
+        catch (Exception ex)
         {
+            TextLogger.Instance
+                      .Log(ex);
             groups = null;
-            // Write to log
             return false;
         }
 
@@ -155,7 +158,8 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
         if (String.IsNullOrWhiteSpace(filter))
         {
             adsObjects = null;
-            // Write to log
+            TextLogger.Instance
+                      .Log("Couldn't get objects because the filter was empty and would've resulted in all objects in the OU.");
             return false;
         }
 
@@ -183,9 +187,10 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
                                                               comparer: DirectoryEntryComparer.Default);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Write to log
+            TextLogger.Instance
+                      .Log(ex);
             return false;
         }
 
@@ -206,16 +211,18 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
             if (result is null)
             {
                 user = null;
-                // Write to log
+                TextLogger.Instance
+                          .Log("The user with the specified sAMAccountName couldn't be found.");
                 return false;
             }
             user = result.GetDirectoryEntry();
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            TextLogger.Instance
+                      .Log(ex);
             user = null;
-            // Write to log
             return false;
         }
     }
@@ -230,9 +237,10 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
             group.CommitChanges();
             return true;
         }
-        catch
+        catch (Exception ex)
         {
-            // Write to log
+            TextLogger.Instance
+                      .Log(ex);
             return false;
         }
     }
