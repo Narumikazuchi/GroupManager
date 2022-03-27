@@ -1,50 +1,9 @@
 ﻿namespace Narumikazuchi.GroupManager;
 
-public sealed partial class ActiveDirectoryInterface
+public static partial class ActiveDirectoryInterface
 {
-}
-
-// Non-Public
-partial class ActiveDirectoryInterface
-{
-    private static IEnumerable<String> CastObjectArrayToStringArray(Object[] array!!)
-    {
-        List<String> result = new();
-        for (Int32 i = 0;
-             i < array.Length;
-             i++)
-        {
-            if (array[i] is String item)
-            {
-                result.Add(item);
-                continue;
-            }
-            if (array[i] is Object[] subarray)
-            {
-                result.AddRange(CastObjectArrayToStringArray(subarray));
-                continue;
-            }
-        }
-        return result;
-    }
-
-    private static String ComposeFilterString(String parameter)
-    {
-        StringBuilder builder = new();
-        builder.Append("(&(&(|(objectClass=person)(objectClass=group))(!(objectClass=computer)))(|");
-        builder.Append($"(sn={parameter}*)");
-        builder.Append($"(givenName={parameter}*)");
-        builder.Append($"(sAMAccountName={parameter}*)");
-        builder.Append("))");
-        return builder.ToString();
-    }
-}
-
-// IActiveDirectoryInterface
-partial class ActiveDirectoryInterface : IActiveDirectoryInterface
-{
-    public IReadOnlyList<String> CastPropertyToStringArray([DisallowNull] DirectoryEntry adsObject!!,
-                                                           [DisallowNull] String property!!)
+    public static IReadOnlyList<String> CastPropertyToStringArray([DisallowNull] DirectoryEntry adsObject!!,
+                                                                  [DisallowNull] String property!!)
     {
         List<String> result = new();
         if (adsObject.Properties[property] is null)
@@ -64,8 +23,8 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
         return result;
     }
 
-    public Boolean TryAddObjectToGroup([DisallowNull] DirectoryEntry group!!,
-                                       [DisallowNull] String objectDn!!)
+    public static Boolean TryAddObjectToGroup([DisallowNull] DirectoryEntry group!!,
+                                              [DisallowNull] String objectDn!!)
     {
         group.Properties["member"]
              .Add(objectDn);
@@ -82,12 +41,12 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
         }
     }
 
-    public Boolean TryGetGroupsManagedByUser([DisallowNull] DirectoryEntry ou!!,
-                                             [DisallowNull] String samAccountName!!,
-                                             [NotNullWhen(true)] out IEnumerable<DirectoryEntry>? groups)
+    public static Boolean TryGetGroupsManagedByUser([DisallowNull] DirectoryEntry ou!!,
+                                                    [DisallowNull] String samAccountName!!,
+                                                    [NotNullWhen(true)] out IEnumerable<DirectoryEntry>? groups)
     {
-        if (!this.TryGetUserBySAMAccountName(ou: ou,
-                                             samAccountName: samAccountName, 
+        if (!TryGetUserBySAMAccountName(ou: ou,
+                                             samAccountName: samAccountName,
                                              user: out DirectoryEntry? user))
         {
             groups = null;
@@ -96,21 +55,21 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
             return false;
         }
 
-        return this.TryGetGroupsManagedByUser(ou: ou,
+        return TryGetGroupsManagedByUser(ou: ou,
                                               user: user,
                                               groups: out groups);
     }
 
-    public Boolean TryGetGroupsManagedByUser([DisallowNull] DirectoryEntry ou!!,
-                                             [DisallowNull] DirectoryEntry user!!,
-                                             [NotNullWhen(true)] out IEnumerable<DirectoryEntry>? groups)
+    public static Boolean TryGetGroupsManagedByUser([DisallowNull] DirectoryEntry ou!!,
+                                                    [DisallowNull] DirectoryEntry user!!,
+                                                    [NotNullWhen(true)] out IEnumerable<DirectoryEntry>? groups)
     {
 
         // Remove the LDAP:// at the start of the path
         String groupManager = user.Path
                                   .ToString()
                                   .Remove(0, 7);
-        List<String> groupNames = new(this.CastPropertyToStringArray(adsObject: user,
+        List<String> groupNames = new(CastPropertyToStringArray(adsObject: user,
                                                                      property: "memberOf"))
         {
             groupManager
@@ -151,9 +110,9 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
         return true;
     }
 
-    public Boolean TryGetObjectsFilteredBy([DisallowNull] DirectoryEntry ou!!,
-                                           [DisallowNull] String filter!!,
-                                           [NotNullWhen(true)] out IEnumerable<DirectoryEntry>? adsObjects)
+    public static Boolean TryGetObjectsFilteredBy([DisallowNull] DirectoryEntry ou!!,
+                                                  [DisallowNull] String filter!!,
+                                                  [NotNullWhen(true)] out IEnumerable<DirectoryEntry>? adsObjects)
     {
         if (String.IsNullOrWhiteSpace(filter))
         {
@@ -197,9 +156,9 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
         return true;
     }
 
-    public Boolean TryGetUserBySAMAccountName([DisallowNull] DirectoryEntry ou!!, 
-                                              [DisallowNull] String samAccountName,
-                                              [NotNullWhen(true)] out DirectoryEntry? user)
+    public static Boolean TryGetUserBySAMAccountName([DisallowNull] DirectoryEntry ou!!,
+                                                     [DisallowNull] String samAccountName,
+                                                     [NotNullWhen(true)] out DirectoryEntry? user)
     {
         try
         {
@@ -227,8 +186,37 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
         }
     }
 
-    public Boolean TryRemoveObjectFromGroup([DisallowNull] DirectoryEntry group,
-                                            [DisallowNull] String objectDn)
+    public static Boolean TryGetOU([DisallowNull] String dn,
+                                   [NotNullWhen(true)] out DirectoryEntry? ou)
+    {
+        try
+        {
+            using DirectorySearcher searcher = new()
+            {
+                Filter = $"(distinguishedName={dn})"
+            };
+            SearchResult? result = searcher.FindOne();
+            if (result is null)
+            {
+                ou = null;
+                TextLogger.Instance
+                          .Log("The ou with the specified DN couldn't be found.");
+                return false;
+            }
+            ou = result.GetDirectoryEntry();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            TextLogger.Instance
+                      .Log(ex);
+            ou = null;
+            return false;
+        }
+    }
+
+    public static Boolean TryRemoveObjectFromGroup([DisallowNull] DirectoryEntry group,
+                                                   [DisallowNull] String objectDn)
     {
         group.Properties["member"]
              .Remove(objectDn);
@@ -243,5 +231,41 @@ partial class ActiveDirectoryInterface : IActiveDirectoryInterface
                       .Log(ex);
             return false;
         }
+    }
+}
+
+// Non-Public
+partial class ActiveDirectoryInterface
+{
+    private static IEnumerable<String> CastObjectArrayToStringArray(Object[] array!!)
+    {
+        List<String> result = new();
+        for (Int32 i = 0;
+             i < array.Length;
+             i++)
+        {
+            if (array[i] is String item)
+            {
+                result.Add(item);
+                continue;
+            }
+            if (array[i] is Object[] subarray)
+            {
+                result.AddRange(CastObjectArrayToStringArray(subarray));
+                continue;
+            }
+        }
+        return result;
+    }
+
+    private static String ComposeFilterString(String parameter)
+    {
+        StringBuilder builder = new();
+        builder.Append("(&(&(|(objectClass=person)(objectClass=group))(!(objectClass=computer)))(|");
+        builder.Append($"(sn={parameter}*)");
+        builder.Append($"(givenName={parameter}*)");
+        builder.Append($"(sAMAccountName={parameter}*)");
+        builder.Append("))");
+        return builder.ToString();
     }
 }

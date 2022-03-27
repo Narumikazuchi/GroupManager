@@ -1,4 +1,6 @@
-﻿namespace Narumikazuchi.GroupManager;
+﻿using Path = System.IO.Path;
+
+namespace Narumikazuchi.GroupManager;
 
 public sealed class TextLogger
 {
@@ -11,8 +13,8 @@ public sealed class TextLogger
     {
         String path = Path.Combine(this.Location
                                        .FullName,
-                                   DateTime.Today
-                                           .ToString() + ".log");
+                                   DateOnly.FromDateTime(DateTime.Today)
+                                           .ToString("yyyy-MM-dd") + ".log");
         using StreamWriter writer = File.AppendText(path);
         writer.Write(DateTime.Now.ToString());
         writer.Write(" === ");
@@ -24,8 +26,8 @@ public sealed class TextLogger
     {
         String path = Path.Combine(this.Location
                                        .FullName,
-                                   DateTime.Today
-                                           .ToString() + ".log");
+                                   DateOnly.FromDateTime(DateTime.Today)
+                                           .ToString("yyyy-MM-dd") + ".log");
         using StreamWriter writer = File.AppendText(path);
         writer.Write(DateTime.Now.ToString());
         writer.Write(" === ");
