@@ -119,10 +119,9 @@ partial class ViewModel : WindowViewModel
         preferences.GroupOverviewWindowSize = size;
         preferences.Save();
 
-        foreach (AListItemViewModel model in this.Members)
-        {
-            model.Dispose();
-        }
+        Application.Current
+                   .Dispatcher
+                   .Invoke(this.DisposeItems);
     }
 
     private void ReloadList() =>
@@ -186,19 +185,26 @@ partial class ViewModel : WindowViewModel
         }
     }
 
-    private void QueryMembers() =>
-        Task.Run(this.StartLoad)
-            .ContinueWith(this.QueryMembers)
-            .ContinueWith(this.FinishLoad);
-    private void QueryMembers(Task _)
+    private void DisposeItems()
     {
         foreach (AListItemViewModel model in this.Members)
         {
             model.Dispose();
         }
-        this.Members
-            .Clear();
+    }
 
+    private void QueryMembers() => 
+        Task.Run(this.StartLoad)
+            .ContinueWith(this.QueryMembers)
+            .ContinueWith(this.FinishLoad);
+    private void QueryMembers(Task _)
+    {
+        Application.Current
+                   .Dispatcher
+                   .Invoke(this.DisposeItems);
+        Application.Current
+                   .Dispatcher
+                   .Invoke(this.Members.Clear);
         IReadOnlyList<String> memberDns = ActiveDirectoryInterface.CastPropertyToStringArray(adsObject: m_AdsObject!,
                                                                                              property: "member");
         foreach (String dn in memberDns)

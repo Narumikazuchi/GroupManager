@@ -85,7 +85,7 @@ partial class ViewModel : WindowViewModel
         window.Top = top;
         window.Left = left;
 
-        this.QueryManagedGroups();
+        this.RequeryManagedGroups();
     }
 
     private void WindowClosing(Window window)
@@ -98,6 +98,13 @@ partial class ViewModel : WindowViewModel
         preferences.MainWindowSize = size;
         preferences.Save();
 
+        Application.Current
+                   .Dispatcher
+                   .Invoke(this.DisposeItems);
+    }
+
+    private void DisposeItems()
+    {
         foreach (AListItemViewModel model in this.ManagedGroups)
         {
             model.Dispose();
@@ -105,7 +112,7 @@ partial class ViewModel : WindowViewModel
     }
 
     private void ReloadList() => 
-        this.QueryManagedGroups();
+        this.RequeryManagedGroups();
 
     private void OpenSelectedItem(ListView view)
     {
@@ -121,20 +128,22 @@ partial class ViewModel : WindowViewModel
         window.ShowDialog();
     }
 
-    private void QueryManagedGroups() =>
-        Task.Run(() => this.ProgressVisibility = Visibility.Visible)
-            .ContinueWith(this.QueryManagedGroups)
-            .ContinueWith(task => this.ProgressVisibility = Visibility.Collapsed);
-
-    private void QueryManagedGroups(Task _)
+    private void RequeryManagedGroups()
     {
-        foreach (AListItemViewModel model in this.ManagedGroups)
-        {
-            model.Dispose();
-        }
-        this.ManagedGroups
-            .Clear();
+        this.ProgressVisibility = Visibility.Visible;
 
+        Task.Run(this.QueryManagedGroups)
+            .ContinueWith(task => this.ProgressVisibility = Visibility.Collapsed);
+    }
+
+    private void QueryManagedGroups()
+    {
+        Application.Current
+                   .Dispatcher
+                   .Invoke(this.DisposeItems);
+        Application.Current
+                   .Dispatcher
+                   .Invoke(this.ManagedGroups.Clear);
         // Use currently logged in user as reference
         UserPrincipal user = UserPrincipal.Current;
         if (user is not null)

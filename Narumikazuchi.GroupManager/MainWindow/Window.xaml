@@ -8,10 +8,9 @@
         xmlns:local="clr-namespace:Narumikazuchi.GroupManager.MainWindow"
         mc:Ignorable="d"
         DataContext="{DynamicResource ViewModel}"
-        Title="Group Manager"
+        Title="{Binding Source={x:Static ns:Localization.Instance}, Path=MainTitle}"
         MinHeight="386" 
-        MinWidth="386"
-        ResizeMode="NoResize">
+        MinWidth="386">
     <Window.Resources>
         <local:ViewModel x:Key="ViewModel"/>
     </Window.Resources>
@@ -50,7 +49,7 @@
                            Text="{Binding Manager}"/>
             </StackPanel>
             <Button Grid.Column="2"
-                    Content="Liste neuladen"
+                    Content="{Binding Source={x:Static ns:Localization.Instance}, Path=ReloadList}"
                     Margin="8"
                     VerticalAlignment="Center"
                     MinHeight="24"
@@ -66,6 +65,7 @@
                   HorizontalAlignment="Stretch"
                   VerticalAlignment="Stretch"
                   SelectionMode="Single"
+                  ItemTemplate="{DynamicResource AdsObjectTemplate}"
                   ItemsSource="{Binding ManagedGroups}">
             <i:Interaction.Triggers>
                 <i:EventTrigger EventName="MouseDoubleClick">
@@ -73,27 +73,10 @@
                                            CommandParameter="{Binding ElementName=m_GroupList}"/>
                 </i:EventTrigger>
             </i:Interaction.Triggers>
-            <ListView.ItemTemplate>
-                <DataTemplate DataType="{x:Type ns:AListItemViewModel}">
-                    <StackPanel Orientation="Horizontal" MaxHeight="32">
-                        <Image Source="{Binding IconPath}"
-                               Margin="0 0 5 0"
-                               Width="32"/>
-                        <TextBlock Text="{Binding Name}"
-                                   Margin="5 0 0 0"
-                                   Width="128"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding DisplayName}"
-                                   Margin="5 0 0 0"
-                                   Width="160"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </DataTemplate>
-            </ListView.ItemTemplate>
         </ListView>
 
         <Button Grid.Row="2"
-                Content="Mitglieder anzeigen"
+                Content="{Binding Source={x:Static ns:Localization.Instance}, Path=ShowMembers}"
                 Margin="8"
                 MinWidth="128"
                 MaxHeight="32"
@@ -101,7 +84,7 @@
                 Command="{Binding OpenSelectedItemCommand}"
                 CommandParameter="{Binding ElementName=m_GroupList}"/>
         <Button Grid.Row="2"
-                Content="Schließen"
+                Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Close}"
                 Margin="8"
                 MinWidth="64"
                 MaxHeight="32"

@@ -9,6 +9,7 @@
         mc:Ignorable="d"
         Title="{Binding Title}"
         DataContext="{DynamicResource ViewModel}"
+        Icon="pack://application:,,,/Narumikazuchi.GroupManager;component/Resources/Group1.png"
         MinHeight="386"
         MinWidth="386">
     <Window.Resources>
@@ -52,7 +53,7 @@
                            Text="{Binding StatusText}" />
             </StackPanel>
             <Button Grid.Column="2"
-                    Content="Liste neuladen"
+                    Content="{Binding Source={x:Static ns:Localization.Instance}, Path=ReloadList}"
                     Margin="8"
                     VerticalAlignment="Center"
                     MinHeight="24"
@@ -69,34 +70,17 @@
                   HorizontalAlignment="Stretch"
                   VerticalAlignment="Stretch"
                   SelectionMode="Single"
-                  ItemsSource="{Binding Members}">
-            <ListView.ItemTemplate>
-                <DataTemplate DataType="{x:Type ns:AListItemViewModel}">
-                    <StackPanel Orientation="Horizontal" MaxHeight="32">
-                        <Image Source="{Binding IconPath}"
-                               Margin="0 0 5 0"
-                               Width="32"/>
-                        <TextBlock Text="{Binding Name}"
-                                   Margin="5 0 0 0"
-                                   Width="128"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding DisplayName}"
-                                   Margin="5 0 0 0"
-                                   Width="160"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+                  ItemTemplate="{DynamicResource AdsObjectTemplate}"
+                  ItemsSource="{Binding Members}"/>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal">
-            <Button Content="Hinzufügen"
+            <Button Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Add}"
                     Margin="8"
                     MinWidth="88"
                     MaxHeight="32"
                     HorizontalAlignment="Left"
                     Command="{Binding AddMemberCommand}"/>
-            <Button Content="Entfernen"
+            <Button Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Remove}"
                     Margin="8"
                     MinWidth="88"
                     MaxHeight="32"
@@ -106,7 +90,7 @@
         </StackPanel>
 
         <Button Grid.Row="3"
-                Content="Schließen"
+                Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Close}"
                 Margin="8"
                 MinWidth="64"
                 MaxHeight="32"
