@@ -3,10 +3,115 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:ns="clr-namespace:Narumikazuchi.GroupManager"
         xmlns:local="clr-namespace:Narumikazuchi.GroupManager.GroupOverviewWindow"
         mc:Ignorable="d"
-        Title="Window" Height="450" Width="800">
+        Title="{Binding Title}"
+        DataContext="{DynamicResource ViewModel}"
+        MinHeight="386"
+        MinWidth="386">
+    <Window.Resources>
+        <local:ViewModel x:Key="ViewModel"/>
+    </Window.Resources>
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding WindowLoadedCommand}"
+                                   CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
+        </i:EventTrigger>
+        <i:EventTrigger EventName="Closing">
+            <i:InvokeCommandAction Command="{Binding WindowClosingCommand}"
+                                   CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
     <Grid>
-        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="64"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="32"/>
+            <RowDefinition Height="32"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="64"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="96"/>
+            </Grid.ColumnDefinitions>
+
+            <Image Grid.Column="0"
+                   Source="pack://application:,,,/Narumikazuchi.GroupManager;component/Resources/User1.png"
+                   Margin="8"
+                   Width="48"
+                   Height="48"
+                   HorizontalAlignment="Left"/>
+            <StackPanel Grid.Column="1">
+                <TextBlock Margin="8"
+                           Text="{Binding GroupName}" />
+                <TextBlock Margin="8"
+                           Text="{Binding StatusText}" />
+            </StackPanel>
+            <Button Grid.Column="2"
+                    Content="Liste neuladen"
+                    Margin="8"
+                    VerticalAlignment="Center"
+                    MinHeight="24"
+                    Command="{Binding ReloadListCommand}"/>
+        </Grid>
+
+        <ns:CyclingProgress Grid.Row="1"
+                            Margin="5"
+                            Panel.ZIndex="1"
+                            Visibility="{Binding ProgressVisibility}" />
+        <ListView x:Name="m_MemberList"
+                  Grid.Row="1"
+                  Margin="5"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch"
+                  SelectionMode="Single"
+                  ItemsSource="{Binding Members}">
+            <ListView.ItemTemplate>
+                <DataTemplate DataType="{x:Type ns:AListItemViewModel}">
+                    <StackPanel Orientation="Horizontal" MaxHeight="32">
+                        <Image Source="{Binding IconPath}"
+                               Margin="0 0 5 0"
+                               Width="32"/>
+                        <TextBlock Text="{Binding Name}"
+                                   Margin="5 0 0 0"
+                                   Width="128"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding DisplayName}"
+                                   Margin="5 0 0 0"
+                                   Width="160"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal">
+            <Button Content="Hinzufügen"
+                    Margin="8"
+                    MinWidth="88"
+                    MaxHeight="32"
+                    HorizontalAlignment="Left"
+                    Command="{Binding AddMemberCommand}"/>
+            <Button Content="Entfernen"
+                    Margin="8"
+                    MinWidth="88"
+                    MaxHeight="32"
+                    HorizontalAlignment="Left"
+                    Command="{Binding RemoveMemberCommand}"
+                    CommandParameter="{Binding ElementName=m_MemberList}"/>
+        </StackPanel>
+
+        <Button Grid.Row="3"
+                Content="Schließen"
+                Margin="8"
+                MinWidth="64"
+                MaxHeight="32"
+                HorizontalAlignment="Right"
+                Command="{Binding CloseWindowCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
     </Grid>
 </Window>
