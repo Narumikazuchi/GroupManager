@@ -4,9 +4,9 @@ public sealed partial class ViewModel
 {
     public ViewModel()
     {
-        m_WindowLoadedCommand = new(this.InitializeWindow);
-        m_WindowClosingCommand = new(this.CloseWindow);
-        m_ReloadCommand = new(this.ReloadList);
+        m_WindowLoadedCommand = new(this.WindowLoaded);
+        m_WindowClosingCommand = new(this.WindowClosing);
+        m_ReloadListCommand = new(this.ReloadList);
         m_OpenSelectedItemCommand = new(this.OpenSelectedItem);
     }
 
@@ -25,7 +25,7 @@ public sealed partial class ViewModel
         get => m_Manager;
         set
         {
-            m_Manager = value;
+            m_Manager = $"Manager: {value}";
             this.OnPropertyChanged(nameof(this.Manager));
         }
     }
@@ -49,7 +49,7 @@ public sealed partial class ViewModel
         m_WindowClosingCommand;
 
     public ICommand ReloadListCommand =>
-        m_ReloadCommand;
+        m_ReloadListCommand;
 
     public ICommand OpenSelectedItemCommand =>
         m_OpenSelectedItemCommand;
@@ -57,7 +57,7 @@ public sealed partial class ViewModel
 
 partial class ViewModel : WindowViewModel
 {
-    private void InitializeWindow(Window window)
+    private void WindowLoaded(Window window)
     {
         Preferences preferences = Preferences.Current;
         window.Width = preferences.MainWindowSize.Width;
@@ -85,10 +85,10 @@ partial class ViewModel : WindowViewModel
         window.Top = top;
         window.Left = left;
 
-        Task.Run(() => this.QueryManagedGroupsAsync());
+        this.QueryManagedGroups();
     }
 
-    private void CloseWindow(Window window)
+    private void WindowClosing(Window window)
     {
         Preferences preferences = Preferences.Current;
         Rect size = new(x: window.Left,
@@ -98,25 +98,14 @@ partial class ViewModel : WindowViewModel
         preferences.MainWindowSize = size;
         preferences.Save();
 
-        foreach (AListItemViewModel model in window.m_GroupList
-                                                   .Items)
+        foreach (AListItemViewModel model in this.ManagedGroups)
         {
             model.Dispose();
         }
     }
 
-    private void ReloadList(Window window)
-    {
-        foreach (AListItemViewModel model in window.m_GroupList
-                                                   .Items)
-        {
-            model.Dispose();
-        }
-        this.ManagedGroups
-            .Clear();
-        this.ProgressVisibility = Visibility.Visible;
-        Task.Run(() => this.QueryManagedGroupsAsync());
-    }
+    private void ReloadList() => 
+        this.QueryManagedGroups();
 
     private void OpenSelectedItem(ListView view)
     {
@@ -132,14 +121,26 @@ partial class ViewModel : WindowViewModel
         window.ShowDialog();
     }
 
-    private async Task QueryManagedGroupsAsync()
+    private void QueryManagedGroups() =>
+        Task.Run(() => this.ProgressVisibility = Visibility.Visible)
+            .ContinueWith(this.QueryManagedGroups)
+            .ContinueWith(task => this.ProgressVisibility = Visibility.Collapsed);
+
+    private void QueryManagedGroups(Task _)
     {
+        foreach (AListItemViewModel model in this.ManagedGroups)
+        {
+            model.Dispose();
+        }
+        this.ManagedGroups
+            .Clear();
+
         // Use currently logged in user as reference
         UserPrincipal user = UserPrincipal.Current;
         if (user is not null)
         {
-            this.Manager = "Manager: " + user.DisplayName;
-            IReadOnlyList<DirectoryEntry> groups = await Task.Run(() => GetGroups(user.SamAccountName));
+            this.Manager = user.DisplayName;
+            IReadOnlyList<DirectoryEntry> groups = GetGroups(user.SamAccountName);
             foreach (DirectoryEntry entry in groups)
             {
                 this.ManagedGroups
@@ -150,7 +151,6 @@ partial class ViewModel : WindowViewModel
         {
             MessageBox.Show("Konnte den angemeldeten Nutzer nicht identifizieren!", "Unknown User", MessageBoxButton.OK, MessageBoxImage.Error);
         }
-        this.ProgressVisibility = Visibility.Collapsed;
     }
 
     private static IReadOnlyList<DirectoryEntry> GetGroups(String samAccountName)
@@ -187,8 +187,8 @@ partial class ViewModel : WindowViewModel
 
     private readonly RelayCommand<Window> m_WindowLoadedCommand;
     private readonly RelayCommand<Window> m_WindowClosingCommand;
-    private readonly RelayCommand<Window> m_ReloadCommand;
+    private readonly RelayCommand m_ReloadListCommand;
     private readonly RelayCommand<ListView> m_OpenSelectedItemCommand;
-    private String m_Manager = "Manager: ";
+    private String m_Manager = "Manager: unbekannt";
     private Visibility m_ProgressVisibility = Visibility.Visible;
 }

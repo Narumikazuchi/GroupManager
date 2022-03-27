@@ -1,7 +1,5 @@
 ﻿global using Narumikazuchi.Windows.Wpf;
-global using System.Collections;
 global using System.Collections.ObjectModel;
-global using System.ComponentModel;
 global using System.Diagnostics.CodeAnalysis;
 global using System.DirectoryServices;
 global using System.DirectoryServices.AccountManagement;
