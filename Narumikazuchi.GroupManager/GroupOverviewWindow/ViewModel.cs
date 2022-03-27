@@ -7,6 +7,7 @@ public sealed partial class ViewModel
         m_WindowLoadedCommand = new(this.WindowLoaded);
         m_WindowClosingCommand = new(this.WindowClosing);
         m_ReloadListCommand = new(this.ReloadList);
+        m_CancelOperationCommand = new(this.CancelOperation);
         m_AddMemberCommand = new(this.AddMember);
         m_RemoveMemberCommand = new(this.RemoveMember);
     }
@@ -69,6 +70,9 @@ public sealed partial class ViewModel
     public ICommand ReloadListCommand =>
         m_ReloadListCommand;
 
+    public ICommand CancelOperationCommand =>
+        m_CancelOperationCommand;
+
     public ICommand AddMemberCommand =>
         m_AddMemberCommand;
 
@@ -126,6 +130,9 @@ partial class ViewModel : WindowViewModel
 
     private void ReloadList() =>
         this.QueryMembers();
+
+    private void CancelOperation() =>
+        m_TokenSource?.Cancel();
 
     private void AddMember()
     {
@@ -185,30 +192,39 @@ partial class ViewModel : WindowViewModel
         }
     }
 
-    private void DisposeItems()
+    private void QueryMembers()
     {
-        foreach (AListItemViewModel model in this.Members)
+        if (m_TokenSource is not null)
         {
-            model.Dispose();
+            m_TokenSource.Cancel();
+            m_TokenSource.Dispose();
+            m_TokenSource = null;
         }
-    }
 
-    private void QueryMembers() => 
-        Task.Run(this.StartLoad)
-            .ContinueWith(this.QueryMembers)
-            .ContinueWith(this.FinishLoad);
-    private void QueryMembers(Task _)
+        this.ProgressVisibility = Visibility.Visible;
+        this.StatusText = "lädt...";
+
+        m_TokenSource = new();
+
+        Task.Run(() => this.QueryMembers(m_TokenSource.Token))
+            .ContinueWith(this.FinishTask);
+    }
+    private void QueryMembers(CancellationToken cancellationToken = default)
     {
-        Application.Current
-                   .Dispatcher
-                   .Invoke(this.DisposeItems);
-        Application.Current
-                   .Dispatcher
-                   .Invoke(this.Members.Clear);
+        this.Reset();
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
         IReadOnlyList<String> memberDns = ActiveDirectoryInterface.CastPropertyToStringArray(adsObject: m_AdsObject!,
                                                                                              property: "member");
         foreach (String dn in memberDns)
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
             if (!DirectoryEntry.Exists($"LDAP://{dn}"))
             {
                 continue;
@@ -221,33 +237,61 @@ partial class ViewModel : WindowViewModel
             {
                 if (objClass == "user")
                 {
-                    this.Members
-                        .Add(new UserListItemViewModel(adsObject));
+                    Application.Current
+                               .Dispatcher
+                               .Invoke(() => this.Members
+                                                 .Add(new UserListItemViewModel(adsObject)));
                 }
                 else if (objClass == "group")
                 {
-                    this.Members
-                        .Add(new GroupListItemViewModel(adsObject));
+                    Application.Current
+                               .Dispatcher
+                               .Invoke(() => this.Members
+                                                 .Add(new GroupListItemViewModel(adsObject)));
+                }
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    this.Reset();
+                    return;
                 }
             }
         }
     }
 
-    private void StartLoad()
+    private void Reset()
     {
-        this.ProgressVisibility = Visibility.Visible;
-        this.StatusText = "lädt...";
+        Application.Current
+                   .Dispatcher
+                   .Invoke(this.DisposeItems);
+        Application.Current
+                   .Dispatcher
+                   .Invoke(this.Members.Clear);
     }
 
-    private void FinishLoad(Task _)
+    private void DisposeItems()
+    {
+        foreach (AListItemViewModel model in this.Members)
+        {
+            model.Dispose();
+        }
+    }
+
+    private void FinishTask(Task _)
     {
         this.ProgressVisibility = Visibility.Collapsed;
         this.StatusText = "fertig";
+        if (m_TokenSource is not null)
+        {
+            m_TokenSource.Dispose();
+            m_TokenSource = null;
+        }
     }
 
     private readonly RelayCommand<Window> m_WindowLoadedCommand;
     private readonly RelayCommand<Window> m_WindowClosingCommand;
     private readonly RelayCommand m_ReloadListCommand;
+    private readonly RelayCommand m_CancelOperationCommand;
     private readonly RelayCommand m_AddMemberCommand;
     private readonly RelayCommand<ListView> m_RemoveMemberCommand;
     private String m_Title = "Mitglieder von unbekannt";
@@ -255,4 +299,5 @@ partial class ViewModel : WindowViewModel
     private String m_StatusText = "Status: lädt...";
     private Visibility m_ProgressVisibility = Visibility.Visible;
     private DirectoryEntry? m_AdsObject;
+    private CancellationTokenSource? m_TokenSource;
 }

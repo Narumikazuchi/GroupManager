@@ -7,6 +7,7 @@ public sealed partial class ViewModel
         m_WindowLoadedCommand = new(this.WindowLoaded);
         m_WindowClosingCommand = new(this.WindowClosing);
         m_ReloadListCommand = new(this.ReloadList);
+        m_CancelOperationCommand = new(this.CancelOperation);
         m_OpenSelectedItemCommand = new(this.OpenSelectedItem);
     }
 
@@ -50,6 +51,9 @@ public sealed partial class ViewModel
 
     public ICommand ReloadListCommand =>
         m_ReloadListCommand;
+
+    public ICommand CancelOperationCommand =>
+        m_CancelOperationCommand;
 
     public ICommand OpenSelectedItemCommand =>
         m_OpenSelectedItemCommand;
@@ -98,21 +102,14 @@ partial class ViewModel : WindowViewModel
         preferences.MainWindowSize = size;
         preferences.Save();
 
-        Application.Current
-                   .Dispatcher
-                   .Invoke(this.DisposeItems);
-    }
-
-    private void DisposeItems()
-    {
-        foreach (AListItemViewModel model in this.ManagedGroups)
-        {
-            model.Dispose();
-        }
+        this.Reset();
     }
 
     private void ReloadList() => 
         this.RequeryManagedGroups();
+
+    private void CancelOperation() =>
+        m_TokenSource?.Cancel();
 
     private void OpenSelectedItem(ListView view)
     {
@@ -130,30 +127,57 @@ partial class ViewModel : WindowViewModel
 
     private void RequeryManagedGroups()
     {
+        if (m_TokenSource is not null)
+        {
+            m_TokenSource.Cancel();
+            m_TokenSource.Dispose();
+            m_TokenSource = null;
+        }
+
         this.ProgressVisibility = Visibility.Visible;
 
-        Task.Run(this.QueryManagedGroups)
-            .ContinueWith(task => this.ProgressVisibility = Visibility.Collapsed);
+        m_TokenSource = new();
+
+        Task.Run(() => this.QueryManagedGroups(m_TokenSource.Token))
+            .ContinueWith(this.FinishTask);
     }
 
-    private void QueryManagedGroups()
+    private void QueryManagedGroups(CancellationToken cancellationToken = default)
     {
-        Application.Current
-                   .Dispatcher
-                   .Invoke(this.DisposeItems);
-        Application.Current
-                   .Dispatcher
-                   .Invoke(this.ManagedGroups.Clear);
+        this.Reset();
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
         // Use currently logged in user as reference
         UserPrincipal user = UserPrincipal.Current;
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
         if (user is not null)
         {
             this.Manager = user.DisplayName;
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
             IReadOnlyList<DirectoryEntry> groups = GetGroups(user.SamAccountName);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
             foreach (DirectoryEntry entry in groups)
             {
-                this.ManagedGroups
-                    .Add(new GroupListItemViewModel(entry));
+                Application.Current
+                           .Dispatcher
+                           .Invoke(() => this.ManagedGroups
+                                             .Add(new GroupListItemViewModel(entry)));
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    this.Reset();
+                    return;
+                }
             }
         }
         else
@@ -194,10 +218,40 @@ partial class ViewModel : WindowViewModel
         return new List<DirectoryEntry>(collection: groups);
     }
 
+    private void Reset()
+    {
+        Application.Current
+                   .Dispatcher
+                   .Invoke(this.DisposeItems);
+        Application.Current
+                   .Dispatcher
+                   .Invoke(this.ManagedGroups.Clear);
+    }
+
+    private void DisposeItems()
+    {
+        foreach (AListItemViewModel model in this.ManagedGroups)
+        {
+            model.Dispose();
+        }
+    }
+
+    private void FinishTask(Task _)
+    {
+        this.ProgressVisibility = Visibility.Collapsed;
+        if (m_TokenSource is not null)
+        {
+            m_TokenSource.Dispose();
+            m_TokenSource = null;
+        }
+    }
+
     private readonly RelayCommand<Window> m_WindowLoadedCommand;
     private readonly RelayCommand<Window> m_WindowClosingCommand;
     private readonly RelayCommand m_ReloadListCommand;
+    private readonly RelayCommand m_CancelOperationCommand;
     private readonly RelayCommand<ListView> m_OpenSelectedItemCommand;
     private String m_Manager = "Manager: unbekannt";
     private Visibility m_ProgressVisibility = Visibility.Visible;
+    private CancellationTokenSource? m_TokenSource;
 }
