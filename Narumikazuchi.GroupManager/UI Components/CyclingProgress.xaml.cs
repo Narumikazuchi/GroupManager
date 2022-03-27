@@ -1,4 +1,5 @@
 ﻿namespace Narumikazuchi.GroupManager;
+
 /// <summary>
 /// Interaction logic for CyclingProgress.xaml
 /// </summary>
@@ -13,11 +14,6 @@ public partial class CyclingProgress
         {
             Interval = TimeSpan.FromMilliseconds(75)
         };
-
-        if (this.IsVisible)
-        {
-            this.Start();
-        }
     }
 }
 
@@ -94,6 +90,11 @@ partial class CyclingProgress : UserControl
                     offset: Math.PI,
                     locOffset: 8.0,
                     step: step);
+
+        if (this.IsVisible)
+        {
+            this.Start();
+        }
     }
 
     private void HandleUnloaded(Object sender,
