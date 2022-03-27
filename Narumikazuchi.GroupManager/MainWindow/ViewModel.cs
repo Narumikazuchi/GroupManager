@@ -157,7 +157,7 @@ partial class ViewModel : WindowViewModel
         }
         if (user is not null)
         {
-            this.Manager = user.DisplayName;
+            this.Manager = user.DisplayName ?? user.Name;
             if (cancellationToken.IsCancellationRequested)
             {
                 return;
