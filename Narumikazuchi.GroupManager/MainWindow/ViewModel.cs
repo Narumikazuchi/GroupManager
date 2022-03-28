@@ -9,6 +9,7 @@ public sealed partial class ViewModel
         m_ReloadListCommand = new(this.ReloadList);
         m_CancelOperationCommand = new(this.CancelOperation);
         m_OpenSelectedItemCommand = new(this.OpenSelectedItem);
+        m_WindowResizedCommand = new(this.WindowResized);
     }
 
     public void OpenItem(Object sender,
@@ -57,6 +58,9 @@ public sealed partial class ViewModel
 
     public ICommand OpenSelectedItemCommand =>
         m_OpenSelectedItemCommand;
+
+    public ICommand WindowResizedCommand =>
+        m_WindowResizedCommand;
 }
 
 partial class ViewModel : WindowViewModel
@@ -246,11 +250,25 @@ partial class ViewModel : WindowViewModel
         }
     }
 
+    private void WindowResized(Window window)
+    {
+        Preferences preferences = Preferences.Current;
+        preferences.MainWindowSize = new()
+        {
+            X = window.Left,
+            Y = window.Top,
+            Width = window.Width,
+            Height = window.Height
+        };
+        preferences.Save();
+    }
+
     private readonly RelayCommand<Window> m_WindowLoadedCommand;
     private readonly RelayCommand<Window> m_WindowClosingCommand;
     private readonly RelayCommand m_ReloadListCommand;
     private readonly RelayCommand m_CancelOperationCommand;
     private readonly RelayCommand<ListView> m_OpenSelectedItemCommand;
+    private readonly RelayCommand<Window> m_WindowResizedCommand;
     private String m_Manager = "Manager: unbekannt";
     private Visibility m_ProgressVisibility = Visibility.Visible;
     private CancellationTokenSource? m_TokenSource;

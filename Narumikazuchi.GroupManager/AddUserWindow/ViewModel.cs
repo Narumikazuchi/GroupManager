@@ -8,6 +8,7 @@ public sealed partial class ViewModel
         m_CancelOperationCommand = new(this.CancelOperation);
         m_AddObjectCommand = new(this.AddObject);
         m_CancelCommand = new(this.Cancel);
+        m_WindowResizedCommand = new(this.WindowResized);
 
         CollectionView view = (CollectionView)CollectionViewSource.GetDefaultView(this.Results);
         view.SortDescriptions
@@ -54,6 +55,9 @@ public sealed partial class ViewModel
 
     public ICommand CancelCommand =>
         m_CancelCommand;
+
+    public ICommand WindowResizedCommand =>
+        m_WindowResizedCommand;
 }
 
 // Non-Public
@@ -220,10 +224,24 @@ partial class ViewModel : WindowViewModel
         }
     }
 
+    private void WindowResized(Window window)
+    {
+        Preferences preferences = Preferences.Current;
+        preferences.AddUserWindowSize = new()
+        {
+            X = window.Left,
+            Y = window.Top,
+            Width = window.Width,
+            Height = window.Height
+        };
+        preferences.Save();
+    }
+
     private readonly RelayCommand m_StartFilteringCommand;
     private readonly RelayCommand m_CancelOperationCommand;
     private readonly RelayCommand<Window> m_AddObjectCommand;
     private readonly RelayCommand<Window> m_CancelCommand;
+    private readonly RelayCommand<Window> m_WindowResizedCommand;
     private String m_FilterParameter = String.Empty;
     private Visibility m_ProgressVisibility = Visibility.Collapsed;
     private CancellationTokenSource? m_TokenSource;

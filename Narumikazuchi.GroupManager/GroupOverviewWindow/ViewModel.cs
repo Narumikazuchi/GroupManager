@@ -10,6 +10,7 @@ public sealed partial class ViewModel
         m_CancelOperationCommand = new(this.CancelOperation);
         m_AddMemberCommand = new(this.AddMember);
         m_RemoveMemberCommand = new(this.RemoveMember);
+        m_WindowResizedCommand = new(this.WindowResized);
     }
 
     public void Load(GroupListItemViewModel group!!)
@@ -78,6 +79,9 @@ public sealed partial class ViewModel
 
     public ICommand RemoveMemberCommand =>
         m_RemoveMemberCommand;
+
+    public ICommand WindowResizedCommand =>
+        m_WindowResizedCommand;
 }
 
 partial class ViewModel : WindowViewModel
@@ -288,12 +292,26 @@ partial class ViewModel : WindowViewModel
         }
     }
 
+    private void WindowResized(Window window)
+    {
+        Preferences preferences = Preferences.Current;
+        preferences.GroupOverviewWindowSize = new()
+        {
+            X = window.Left,
+            Y = window.Top,
+            Width = window.Width,
+            Height = window.Height
+        };
+        preferences.Save();
+    }
+
     private readonly RelayCommand<Window> m_WindowLoadedCommand;
     private readonly RelayCommand<Window> m_WindowClosingCommand;
     private readonly RelayCommand m_ReloadListCommand;
     private readonly RelayCommand m_CancelOperationCommand;
     private readonly RelayCommand m_AddMemberCommand;
     private readonly RelayCommand<ListView> m_RemoveMemberCommand;
+    private readonly RelayCommand<Window> m_WindowResizedCommand;
     private String m_Title = "Mitglieder von unbekannt";
     private String m_GroupName = "Gruppe: unbekannt";
     private String m_StatusText = "Status: lädt...";
