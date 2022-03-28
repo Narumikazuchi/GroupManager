@@ -21,4 +21,12 @@ public class Localization
     public String FilterLabel { get; } = "Filter by: ";
 
     public String ResultsLabel { get; } = "Results: ";
+
+    public String Configuration { get; } = "Configuration";
+
+    public String UserOuDn { get; } = "Distinguished Name of the Organisational Unit containing all users:";
+
+    public String GroupOuDn { get; } = "Distinguished Name of the Organisational Unit containing all groups:";
+
+    public String Save { get; } = "Save";
 }

@@ -3,10 +3,76 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ns="clr-namespace:Narumikazuchi.GroupManager"
         xmlns:local="clr-namespace:Narumikazuchi.GroupManager.ConfigurationWindow"
         mc:Ignorable="d"
-        Title="Window" Height="450" Width="800">
+        Title="{Binding Source={x:Static ns:Localization.Instance}, Path=Configuration}"
+        DataContext="{DynamicResource ViewModel}"
+        MinHeight="256"
+        MinWidth="256"
+        WindowStyle="ToolWindow"
+        ResizeMode="NoResize">
+    <Window.Resources>
+        <local:ViewModel x:Key="ViewModel"/>
+    </Window.Resources>
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
         
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Grid.ColumnSpan="2"
+                   Margin="8 4"
+                   VerticalAlignment="Center"
+                   TextWrapping="WrapWithOverflow"
+                   Text="{Binding Source={x:Static ns:Localization.Instance}, Path=UserOuDn}"/>
+
+        <TextBox Grid.Row="1"
+                 Grid.ColumnSpan="2"
+                 Margin="8 4"
+                 MaxHeight="20"
+                 VerticalAlignment="Center"
+                 Text="{Binding UserOuDn}"/>
+
+        <TextBlock Grid.Row="2"
+                   Grid.ColumnSpan="2"
+                   Margin="8 4"
+                   VerticalAlignment="Center"
+                   TextWrapping="WrapWithOverflow"
+                   Text="{Binding Source={x:Static ns:Localization.Instance}, Path=GroupOuDn}"/>
+
+        <TextBox Grid.Row="3"
+                 Grid.ColumnSpan="2"
+                 Margin="8 4"
+                 MaxHeight="20"
+                 VerticalAlignment="Center"
+                 Text="{Binding GroupOuDn}"/>
+
+        <Button Grid.Row="4"
+                Grid.Column="0"
+                Margin="4"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Right"
+                Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Save}"
+                Command="{Binding SaveConfigurationCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
+
+        <Button Grid.Row="4"
+                Grid.Column="1"
+                Margin="4"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Left"
+                Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Cancel}"
+                Command="{Binding CloseWindowCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
     </Grid>
 </Window>
