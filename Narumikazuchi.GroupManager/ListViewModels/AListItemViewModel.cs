@@ -6,9 +6,10 @@ public abstract partial class AListItemViewModel
     {
         this.Name = adsObject.Name
                              .Remove(0, 3);
-        this.DisplayName = adsObject.Properties["displayName"]
-                                    .Value?
-                                    .ToString();
+        String? display = adsObject.Properties["displayName"]
+                                   .Value?
+                                   .ToString();
+        this.DisplayName = display ?? this.Name;
         this.AdsObject = adsObject;
     }
 

@@ -27,6 +27,16 @@ public sealed partial class ViewModel
         }
     }
 
+    public Visibility ProgressVisibility
+    {
+        get => m_ProgressVisibility;
+        set
+        {
+            m_ProgressVisibility = value;
+            this.OnPropertyChanged(nameof(this.ProgressVisibility));
+        }
+    }
+
     public ICommand SaveConfigurationCommand =>
         m_SaveConfigurationCommand;
 }
@@ -35,16 +45,44 @@ partial class ViewModel : WindowViewModel
 {
     private void SaveConfiguration(Window window)
     {
-        if (!ActiveDirectoryInterface.TryGetOU(dn: this.UserOuDn,
-                                               ou: out _))
+        this.ProgressVisibility = Visibility.Visible;
+        Task.Run(async () => await this.SaveConfigurationAsync(window));
+    }
+
+    private async Task SaveConfigurationAsync(Window window)
+    {
+        Boolean success = await CanGetOuAsync(this.UserOuDn);
+        if (!success)
         {
-            MessageBox.Show("Error");
+            window.Dispatcher
+                  .Invoke(() =>
+            {
+                MessageBox.Show(owner: window,
+                                messageBoxText: String.Format(format: Localization.Instance
+                                                                                  .FailedToOpenOU,
+                                                              arg0: this.UserOuDn),
+                                caption: "Failed to open OU",
+                                button: MessageBoxButton.OK,
+                                icon: MessageBoxImage.Error);
+                this.ProgressVisibility = Visibility.Collapsed;
+            });
             return;
         }
-        if (!ActiveDirectoryInterface.TryGetOU(dn: this.GroupOuDn,
-                                               ou: out _))
+        success = await CanGetOuAsync(this.GroupOuDn);
+        if (!success)
         {
-            MessageBox.Show("Error");
+            window.Dispatcher
+                  .Invoke(() =>
+                  {
+                      MessageBox.Show(owner: window,
+                                      messageBoxText: String.Format(format: Localization.Instance
+                                                                                        .FailedToOpenOU,
+                                                                    arg0: this.GroupOuDn),
+                                      caption: "Failed to open OU",
+                                      button: MessageBoxButton.OK,
+                                      icon: MessageBoxImage.Error);
+                      this.ProgressVisibility = Visibility.Collapsed;
+            });
             return;
         }
 
@@ -55,10 +93,27 @@ partial class ViewModel : WindowViewModel
         };
         Configuration.Current = configuration;
         configuration.Save();
-        window.Close();
+        window.Dispatcher
+              .Invoke(() =>
+        {
+            window.DialogResult = true;
+            window.Close();
+        });
     }
+
+    private static async Task<Boolean> CanGetOuAsync(String dn) => 
+        await Task.Run(() =>
+        {
+            if (!ActiveDirectoryInterface.TryGetOU(dn: dn,
+                                                   ou: out _))
+            {
+                return false;
+            }
+            return true;
+        });
 
     private readonly RelayCommand<Window> m_SaveConfigurationCommand;
     private String m_UserOuDn = String.Empty;
     private String m_GroupOuDn = String.Empty;
+    private Visibility m_ProgressVisibility = Visibility.Collapsed;
 }

@@ -8,8 +8,11 @@ public sealed partial class ViewModel
         m_WindowClosingCommand = new(this.WindowClosing);
         m_ReloadListCommand = new(this.ReloadList);
         m_CancelOperationCommand = new(this.CancelOperation);
-        m_OpenSelectedItemCommand = new(this.OpenSelectedItem);
+        m_OpenSelectedItemCommand = new(onExecute: this.OpenSelectedItem,
+                                        canExecute: this.CanOpenSelectedItem);
         m_WindowResizedCommand = new(this.WindowResized);
+
+        this.Manager = Localization.Instance.Unknown;
     }
 
     public void OpenItem(Object sender,
@@ -27,7 +30,8 @@ public sealed partial class ViewModel
         get => m_Manager;
         set
         {
-            m_Manager = $"Manager: {value}";
+            m_Manager = String.Format(format: Localization.Instance.Manager,
+                                      arg0: value);
             this.OnPropertyChanged(nameof(this.Manager));
         }
     }
@@ -115,6 +119,10 @@ partial class ViewModel : WindowViewModel
     private void CancelOperation() =>
         m_TokenSource?.Cancel();
 
+    private Boolean CanOpenSelectedItem(ListView view) =>
+        view.SelectedItem is not null 
+                          and GroupListItemViewModel;
+
     private void OpenSelectedItem(ListView view)
     {
         if (view.SelectedItem is null ||
@@ -153,40 +161,33 @@ partial class ViewModel : WindowViewModel
         {
             return;
         }
-        // Use currently logged in user as reference
+
         UserPrincipal user = UserPrincipal.Current;
         if (cancellationToken.IsCancellationRequested)
         {
             return;
         }
-        if (user is not null)
+        this.Manager = user.DisplayName ?? user.Name;
+        if (cancellationToken.IsCancellationRequested)
         {
-            this.Manager = user.DisplayName ?? user.Name;
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return;
-            }
-            IReadOnlyList<DirectoryEntry> groups = GetGroups(user.SamAccountName);
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return;
-            }
-            foreach (DirectoryEntry entry in groups)
-            {
-                Application.Current
-                           .Dispatcher
-                           .Invoke(() => this.ManagedGroups
-                                             .Add(new GroupListItemViewModel(entry)));
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    this.Reset();
-                    return;
-                }
-            }
+            return;
         }
-        else
+        IReadOnlyList<DirectoryEntry> groups = GetGroups(user.SamAccountName);
+        if (cancellationToken.IsCancellationRequested)
         {
-            MessageBox.Show("Konnte den angemeldeten Nutzer nicht identifizieren!", "Unknown User", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+        foreach (DirectoryEntry entry in groups)
+        {
+            Application.Current
+                        .Dispatcher
+                        .Invoke(() => this.ManagedGroups
+                                            .Add(new GroupListItemViewModel(entry)));
+            if (cancellationToken.IsCancellationRequested)
+            {
+                this.Reset();
+                return;
+            }
         }
     }
 
@@ -196,27 +197,45 @@ partial class ViewModel : WindowViewModel
         if (!ActiveDirectoryInterface.TryGetOU(dn: configuration.UserOuDn,
                                                ou: out DirectoryEntry? userOu))
         {
-            MessageBox.Show("Konnte den angemeldeten Nutzer nicht finden!", "Failed to open OU", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(messageBoxText: String.Format(format: Localization.Instance
+                                                                              .FailedToOpenOU,
+                                                          arg0: configuration.UserOuDn),
+                            caption: "Failed to open OU",
+                            button: MessageBoxButton.OK,
+                            icon: MessageBoxImage.Error);
             return Array.Empty<DirectoryEntry>();
         }
         if (!ActiveDirectoryInterface.TryGetUserBySAMAccountName(ou: userOu,
                                                                  samAccountName: samAccountName,
                                                                  out DirectoryEntry? user))
         {
-            MessageBox.Show("Konnte den angemeldeten Nutzer nicht identifizieren!", "Unknown User", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(messageBoxText: String.Format(format: Localization.Instance
+                                                                              .FailedToFindObject,
+                                                          arg0: samAccountName),
+                            caption: "Failed to find object",
+                            button: MessageBoxButton.OK,
+                            icon: MessageBoxImage.Error);
             return Array.Empty<DirectoryEntry>();
         }
         if (!ActiveDirectoryInterface.TryGetOU(dn: configuration.GroupOuDn,
                                                ou: out DirectoryEntry? groupOu))
         {
-            MessageBox.Show("Konnte den Gruppencontainer nicht finden!", "Failed to open OU", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(messageBoxText: String.Format(format: Localization.Instance
+                                                                              .FailedToOpenOU,
+                                                          arg0: configuration.GroupOuDn),
+                            caption: "Failed to open OU",
+                            button: MessageBoxButton.OK,
+                            icon: MessageBoxImage.Error);
             return Array.Empty<DirectoryEntry>();
         }
         if (!ActiveDirectoryInterface.TryGetGroupsManagedByUser(ou: groupOu,
                                                                 user: user,
                                                                 groups: out IEnumerable<DirectoryEntry>? groups))
         {
-            MessageBox.Show("Konnte keine Gruppen finden!", "Group find error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(messageBoxText: Localization.Instance.NoObjectsFound,
+                            caption: "No objects found",
+                            button: MessageBoxButton.OK,
+                            icon: MessageBoxImage.Error);
             return Array.Empty<DirectoryEntry>();
         }
         return new List<DirectoryEntry>(collection: groups);
@@ -269,7 +288,7 @@ partial class ViewModel : WindowViewModel
     private readonly RelayCommand m_CancelOperationCommand;
     private readonly RelayCommand<ListView> m_OpenSelectedItemCommand;
     private readonly RelayCommand<Window> m_WindowResizedCommand;
-    private String m_Manager = "Manager: unbekannt";
     private Visibility m_ProgressVisibility = Visibility.Visible;
+    private String m_Manager = String.Empty;
     private CancellationTokenSource? m_TokenSource;
 }

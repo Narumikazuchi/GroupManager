@@ -36,11 +36,11 @@ public sealed partial class Configuration
         writer.WriteStartElement("configuration");
         writer.WriteStartElement("userou");
         writer.WriteAttributeString(localName: "dn",
-                                    value: m_UserOuDn);
+                                    value: this.UserOuDn);
         writer.WriteEndElement();
         writer.WriteStartElement("groupou");
         writer.WriteAttributeString(localName: "dn",
-                                    value: m_GroupOuDn);
+                                    value: this.GroupOuDn);
         writer.WriteEndElement();
         writer.WriteEndElement();
         writer.Flush();
@@ -103,15 +103,15 @@ public sealed partial class Configuration
 
     public String UserOuDn
     {
-        get => $"LDAP://{m_UserOuDn}";
-        set => m_UserOuDn = value;
-    }
+        get;
+        set;
+    } = String.Empty;
 
     public String GroupOuDn
     {
-        get => $"LDAP://{m_GroupOuDn}";
-        set => m_GroupOuDn = value;
-    }
+        get;
+        set;
+    } = String.Empty;
 }
 
 // Non-Public
@@ -119,6 +119,4 @@ partial class Configuration
 {
     private static readonly DirectoryInfo s_Directory;
     private static readonly FileInfo s_File;
-    private String m_UserOuDn = String.Empty;
-    private String m_GroupOuDn = String.Empty;
 }

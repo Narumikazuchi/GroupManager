@@ -8,8 +8,8 @@
         mc:Ignorable="d"
         Title="{Binding Source={x:Static ns:Localization.Instance}, Path=Configuration}"
         DataContext="{DynamicResource ViewModel}"
-        MinHeight="256"
-        MinWidth="256"
+        Height="256"
+        Width="256"
         WindowStyle="ToolWindow"
         ResizeMode="NoResize">
     <Window.Resources>
@@ -28,6 +28,13 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
+
+        <ns:CyclingProgress Grid.Column="0"
+                            Grid.Row="0"
+                            Grid.ColumnSpan="2"
+                            Grid.RowSpan="4"
+                            Panel.ZIndex="1"
+                            Visibility="{Binding ProgressVisibility}"/>
 
         <TextBlock Grid.Row="0"
                    Grid.ColumnSpan="2"

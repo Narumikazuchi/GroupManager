@@ -4,6 +4,7 @@ public sealed partial class ViewModel
 {
     public ViewModel()
     {
+        m_WindowLoadedCommand = new(this.WindowLoaded);
         m_StartFilteringCommand = new(this.StartFiltering);
         m_CancelOperationCommand = new(this.CancelOperation);
         m_AddObjectCommand = new(this.AddObject);
@@ -22,16 +23,6 @@ public sealed partial class ViewModel
         set;
     }
 
-    public String FilterParameter
-    {
-        get => m_FilterParameter;
-        set
-        {
-            m_FilterParameter = value;
-            this.OnPropertyChanged(nameof(this.FilterParameter));
-        }
-    }
-
     public Visibility ProgressVisibility
     {
         get => m_ProgressVisibility;
@@ -43,6 +34,9 @@ public sealed partial class ViewModel
     }
 
     public ObservableCollection<AListItemViewModel> Results { get; } = new();
+
+    public ICommand WindowLoadedCommand =>
+        m_WindowLoadedCommand;
 
     public ICommand StartFilteringCommand =>
         m_StartFilteringCommand;
@@ -63,7 +57,36 @@ public sealed partial class ViewModel
 // Non-Public
 partial class ViewModel : WindowViewModel
 {
-    private void StartFiltering()
+    private void WindowLoaded(Window window)
+    {
+        Preferences preferences = Preferences.Current;
+        window.Width = preferences.AddUserWindowSize.Width;
+        window.Height = preferences.AddUserWindowSize.Height;
+
+        Double left = preferences.AddUserWindowSize.X;
+        Double top = preferences.AddUserWindowSize.Y;
+        if (top + window.Height / 2 > SystemParameters.VirtualScreenHeight)
+        {
+            top = SystemParameters.VirtualScreenHeight - window.Height;
+        }
+        if (top < 0)
+        {
+            top = 0;
+        }
+
+        if (left + window.Width / 2 > SystemParameters.VirtualScreenWidth)
+        {
+            left = SystemParameters.VirtualScreenWidth - window.Width;
+        }
+        if (left < 0)
+        {
+            left = 0;
+        }
+        window.Top = top;
+        window.Left = left;
+    }
+
+    private void StartFiltering(TextBox textBox)
     {
         if (m_TokenSource is not null)
         {
@@ -72,8 +95,10 @@ partial class ViewModel : WindowViewModel
             m_TokenSource = null;
         }
 
+        m_FilterParameter = textBox.Text;
         if (String.IsNullOrEmpty(m_FilterParameter))
         {
+            this.Reset();
             this.FinishTask(default);
             return;
         }
@@ -111,7 +136,8 @@ partial class ViewModel : WindowViewModel
         }
 
         if (!ActiveDirectoryInterface.TryGetObjectsFilteredBy(ou: userOu,
-                                                              filter: this.FilterParameter,
+                                                              filter: m_FilterParameter,
+                                                              findGroups: false,
                                                               adsObjects: out IEnumerable<DirectoryEntry>? users))
         {
             return;
@@ -147,7 +173,8 @@ partial class ViewModel : WindowViewModel
         }
 
         if (!ActiveDirectoryInterface.TryGetObjectsFilteredBy(ou: groupOu,
-                                                              filter: this.FilterParameter,
+                                                              filter: m_FilterParameter,
+                                                              findGroups: true,
                                                               adsObjects: out IEnumerable<DirectoryEntry>? groups))
         {
             return;
@@ -193,7 +220,7 @@ partial class ViewModel : WindowViewModel
         }
 
         this.AdsObject = model.AdsObject;
-        this.DisposeItems();
+        this.DisposeItems(model.AdsObject);
         window.DialogResult = true;
         window.Close();
     }
@@ -216,10 +243,18 @@ partial class ViewModel : WindowViewModel
                    .Invoke(this.Results.Clear);
     }
 
-    private void DisposeItems()
+    private void DisposeItems() =>
+        this.DisposeItems(null);
+    private void DisposeItems(DirectoryEntry? excluded)
     {
         foreach (AListItemViewModel model in this.Results)
         {
+            if (excluded is not null &&
+                excluded.Guid == model.AdsObject
+                                      .Guid)
+            {
+                continue;
+            }
             model.Dispose();
         }
     }
@@ -237,7 +272,8 @@ partial class ViewModel : WindowViewModel
         preferences.Save();
     }
 
-    private readonly RelayCommand m_StartFilteringCommand;
+    private readonly RelayCommand<Window> m_WindowLoadedCommand;
+    private readonly RelayCommand<TextBox> m_StartFilteringCommand;
     private readonly RelayCommand m_CancelOperationCommand;
     private readonly RelayCommand<Window> m_AddObjectCommand;
     private readonly RelayCommand<Window> m_CancelCommand;

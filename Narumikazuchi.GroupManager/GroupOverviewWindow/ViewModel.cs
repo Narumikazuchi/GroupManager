@@ -9,14 +9,19 @@ public sealed partial class ViewModel
         m_ReloadListCommand = new(this.ReloadList);
         m_CancelOperationCommand = new(this.CancelOperation);
         m_AddMemberCommand = new(this.AddMember);
-        m_RemoveMemberCommand = new(this.RemoveMember);
+        m_RemoveMemberCommand = new(onExecute: this.RemoveMember,
+                                    canExecute: this.CanRemoveMember);
         m_WindowResizedCommand = new(this.WindowResized);
+
+        this.Title = Localization.Instance.Unknown;
+        this.GroupName = Localization.Instance.Unknown;
+        this.StatusText = Localization.Instance.StatusLoading;
     }
 
     public void Load(GroupListItemViewModel group!!)
     {
-        this.Title = group.DisplayName ?? "unbekannt";
-        this.GroupName = group.DisplayName ?? "unbekannt";
+        this.Title = group.DisplayName ?? Localization.Instance.Unknown;
+        this.GroupName = group.DisplayName ?? Localization.Instance.Unknown;
         m_AdsObject = group.AdsObject;
     }
 
@@ -25,7 +30,8 @@ public sealed partial class ViewModel
         get => m_Title;
         set
         {
-            m_Title = $"Mitglieder von {value}";
+            m_Title = String.Format(format: Localization.Instance.MembersOf,
+                                    arg0: value);
             this.OnPropertyChanged(nameof(this.Title));
         }
     }
@@ -35,7 +41,8 @@ public sealed partial class ViewModel
         get => m_GroupName;
         set
         {
-            m_GroupName = $"Gruppe: {value}";
+            m_GroupName = String.Format(format: Localization.Instance.Group,
+                                        arg0: value);
             this.OnPropertyChanged(nameof(this.GroupName));
         }
     }
@@ -45,7 +52,8 @@ public sealed partial class ViewModel
         get => m_StatusText;
         set
         {
-            m_StatusText = $"Status: {value}";
+            m_StatusText = String.Format(format: Localization.Instance.Status,
+                                         arg0: value);
             this.OnPropertyChanged(nameof(this.StatusText));
         }
     }
@@ -145,7 +153,8 @@ partial class ViewModel : WindowViewModel
         Boolean? result = window.ShowDialog();
 
         if (!result.HasValue ||
-            !result.Value)
+            !result.Value ||
+            viewModel.AdsObject is null)
         {
             return;
         }
@@ -172,9 +181,17 @@ partial class ViewModel : WindowViewModel
         if (!ActiveDirectoryInterface.TryAddObjectToGroup(group: m_AdsObject!,
                                                           objectDn: dn))
         {
-            MessageBox.Show($"Konnte das Object '{dn}' nicht zur Gruppe hinzufügen!", "COM Exception", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(messageBoxText: String.Format(format: Localization.Instance.FailedToAdd,
+                                                          arg0: dn),
+                            caption: "COM Exception",
+                            button: MessageBoxButton.OK,
+                            icon: MessageBoxImage.Error);
         }
     }
+
+    private Boolean CanRemoveMember(ListView view) =>
+        view.SelectedItem is not null
+                          and AListItemViewModel;
 
     private void RemoveMember(ListView view)
     {
@@ -192,7 +209,11 @@ partial class ViewModel : WindowViewModel
         if (!ActiveDirectoryInterface.TryRemoveObjectFromGroup(group: m_AdsObject!,
                                                                objectDn: dn))
         {
-            MessageBox.Show($"Konnte das Mitglied '{dn}' nicht von der Gruppe entfernen!", "COM Exception", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(messageBoxText: String.Format(format: Localization.Instance.FailedToRemove,
+                                                          arg0: dn),
+                            caption: "COM Exception",
+                            button: MessageBoxButton.OK,
+                            icon: MessageBoxImage.Error);
         }
     }
 
@@ -206,7 +227,7 @@ partial class ViewModel : WindowViewModel
         }
 
         this.ProgressVisibility = Visibility.Visible;
-        this.StatusText = "lädt...";
+        this.StatusText = Localization.Instance.StatusLoading;
 
         m_TokenSource = new();
 
@@ -284,7 +305,7 @@ partial class ViewModel : WindowViewModel
     private void FinishTask(Task _)
     {
         this.ProgressVisibility = Visibility.Collapsed;
-        this.StatusText = "fertig";
+        this.StatusText = Localization.Instance.StatusDone;
         if (m_TokenSource is not null)
         {
             m_TokenSource.Dispose();
@@ -312,10 +333,10 @@ partial class ViewModel : WindowViewModel
     private readonly RelayCommand m_AddMemberCommand;
     private readonly RelayCommand<ListView> m_RemoveMemberCommand;
     private readonly RelayCommand<Window> m_WindowResizedCommand;
-    private String m_Title = "Mitglieder von unbekannt";
-    private String m_GroupName = "Gruppe: unbekannt";
-    private String m_StatusText = "Status: lädt...";
     private Visibility m_ProgressVisibility = Visibility.Visible;
+    private String m_Title = String.Empty;
+    private String m_GroupName = String.Empty;
+    private String m_StatusText = String.Empty;
     private DirectoryEntry? m_AdsObject;
     private CancellationTokenSource? m_TokenSource;
 }

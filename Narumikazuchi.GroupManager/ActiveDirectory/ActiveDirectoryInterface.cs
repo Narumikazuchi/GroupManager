@@ -46,8 +46,8 @@ public static partial class ActiveDirectoryInterface
                                                     [NotNullWhen(true)] out IEnumerable<DirectoryEntry>? groups)
     {
         if (!TryGetUserBySAMAccountName(ou: ou,
-                                             samAccountName: samAccountName,
-                                             user: out DirectoryEntry? user))
+                                        samAccountName: samAccountName,
+                                        user: out DirectoryEntry? user))
         {
             groups = null;
             TextLogger.Instance
@@ -56,54 +56,33 @@ public static partial class ActiveDirectoryInterface
         }
 
         return TryGetGroupsManagedByUser(ou: ou,
-                                              user: user,
-                                              groups: out groups);
+                                         user: user,
+                                         groups: out groups);
     }
 
     public static Boolean TryGetGroupsManagedByUser([DisallowNull] DirectoryEntry ou!!,
                                                     [DisallowNull] DirectoryEntry user!!,
                                                     [NotNullWhen(true)] out IEnumerable<DirectoryEntry>? groups)
     {
-
-        // Remove the LDAP:// at the start of the path
-        String groupManager = user.Path
-                                  .ToString()
-                                  .Remove(0, 7);
-        List<String> groupNames = new(CastPropertyToStringArray(adsObject: user,
-                                                                     property: "memberOf"))
-        {
-            groupManager
-        };
-
+        IReadOnlyList<String> groupDns = CastPropertyToStringArray(adsObject: user,
+                                                                   property: "managedObjects");
         List<DirectoryEntry> results = new();
-        try
+        foreach (String groupDn in groupDns)
         {
-            using DirectorySearcher searcher = new(ou)
+            DirectoryEntry group = new($"LDAP://{groupDn}");
+            Object? value = group.Properties["objectClass"]
+                                 .Value;
+            if (value is Object[] &&
+                CastPropertyToStringArray(adsObject: group,
+                                          property: "objectClass").Contains("group"))
             {
-                Filter = "(objectClass=group)"
-            };
-            SearchResultCollection resultCollection = searcher.FindAll();
-            foreach (SearchResult result in resultCollection)
-            {
-                DirectoryEntry group = result.GetDirectoryEntry();
-                String? managedBy = group.Properties["managedBy"]
-                                         .Value?
-                                         .ToString();
-                if (managedBy is not null &&
-                    groupNames.Contains(managedBy))
-                {
-                    results.Add(group);
-                    continue;
-                }
-                group.Dispose();
+                results.Add(group);
+                continue;
             }
-        }
-        catch (Exception ex)
-        {
-            TextLogger.Instance
-                      .Log(ex);
-            groups = null;
-            return false;
+            if (value?.ToString() == "group")
+            {
+                results.Add(group);
+            }
         }
 
         groups = results;
@@ -112,6 +91,7 @@ public static partial class ActiveDirectoryInterface
 
     public static Boolean TryGetObjectsFilteredBy([DisallowNull] DirectoryEntry ou!!,
                                                   [DisallowNull] String filter!!,
+                                                  in Boolean findGroups,
                                                   [NotNullWhen(true)] out IEnumerable<DirectoryEntry>? adsObjects)
     {
         if (String.IsNullOrWhiteSpace(filter))
@@ -131,19 +111,20 @@ public static partial class ActiveDirectoryInterface
         {
             using DirectorySearcher searcher = new(ou);
 
-            for (Int32 i = 1;
+            for (Int32 i = 0;
                  i < items.Length;
                  i++)
             {
                 List<DirectoryEntry> tempResults = new();
-                searcher.Filter = ComposeFilterString(items[i]);
+                searcher.Filter = ComposeFilterString(pattern: items[i],
+                                                      group: findGroups);
                 SearchResultCollection resultCollection = searcher.FindAll();
                 foreach (SearchResult result in resultCollection)
                 {
                     tempResults.Add(result.GetDirectoryEntry());
                 }
-                adsObjects = adsObjects.Intersect(second: tempResults,
-                                                              comparer: DirectoryEntryComparer.Default);
+                adsObjects = adsObjects.Union(second: tempResults,
+                                              comparer: DirectoryEntryComparer.Default);
             }
         }
         catch (Exception ex)
@@ -258,14 +239,13 @@ partial class ActiveDirectoryInterface
         return result;
     }
 
-    private static String ComposeFilterString(String parameter)
+    private static String ComposeFilterString(String pattern,
+                                              in Boolean group)
     {
-        StringBuilder builder = new();
-        builder.Append("(&(&(|(objectClass=person)(objectClass=group))(!(objectClass=computer)))(|");
-        builder.Append($"(sn={parameter}*)");
-        builder.Append($"(givenName={parameter}*)");
-        builder.Append($"(sAMAccountName={parameter}*)");
-        builder.Append("))");
-        return builder.ToString();
+        if (group)
+        {
+            return $"(&(&(objectClass=group)(!(objectClass=computer)))(|(sn={pattern}*)(givenName={pattern}*)(sAMAccountName={pattern}*)))";
+        }
+        return $"(&(&(|(objectClass=person)(objectClass=user))(!(objectClass=computer)))(|(sn={pattern}*)(givenName={pattern}*)(sAMAccountName={pattern}*)))";
     }
 }

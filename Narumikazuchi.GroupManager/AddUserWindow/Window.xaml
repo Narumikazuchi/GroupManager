@@ -16,6 +16,10 @@
         <local:ViewModel x:Key="ViewModel"/>
     </Window.Resources>
     <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding WindowLoadedCommand}"
+                                   CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
+        </i:EventTrigger>
         <i:EventTrigger EventName="SizeChanged">
             <i:InvokeCommandAction Command="{Binding WindowResizedCommand}"
                                    CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
@@ -25,7 +29,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="32"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="32"/>
+            <RowDefinition Height="48"/>
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0"
@@ -36,11 +40,11 @@
         <TextBox Grid.Row="0"
                  Margin="94 8 8 8"
                  HorizontalAlignment="Stretch"
-                 VerticalAlignment="Center"
-                 Text="{Binding FilterParameter}">
+                 VerticalAlignment="Center">
             <i:Interaction.Triggers>
                 <i:EventTrigger EventName="TextChanged">
-                    <i:InvokeCommandAction Command="{Binding StartFilteringCommand}"/>
+                    <i:InvokeCommandAction Command="{Binding StartFilteringCommand}"
+                                           CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=TextBox}}"/>
                 </i:EventTrigger>
             </i:Interaction.Triggers>
         </TextBox>
@@ -79,10 +83,12 @@
                       SelectionMode="Single"
                       ItemTemplate="{DynamicResource AdsObjectTemplate}"
                       ItemsSource="{Binding Results}">
-                <i:EventTrigger EventName="MouseDoubleClick">
-                    <i:InvokeCommandAction Command="{Binding AddObjectCommand}"
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="MouseDoubleClick">
+                        <i:InvokeCommandAction Command="{Binding AddObjectCommand}"
                                            CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
-                </i:EventTrigger>
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
             </ListView>
         </Grid>
 
