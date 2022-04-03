@@ -10,7 +10,11 @@
         DataContext="{DynamicResource ViewModel}"
         Title="{Binding Source={x:Static ns:Localization.Instance}, Path=MainTitle}"
         MinHeight="386" 
-        MinWidth="386">
+        MinWidth="386"
+        Left="{Binding Source={x:Static ns:Preferences.Current}, Path=MainWindowSize.X}"
+        Top="{Binding Source={x:Static ns:Preferences.Current}, Path=MainWindowSize.Y}"
+        Width="{Binding Source={x:Static ns:Preferences.Current}, Path=MainWindowSize.Width}"
+        Height="{Binding Source={x:Static ns:Preferences.Current}, Path=MainWindowSize.Height}">
     <Window.Resources>
         <local:ViewModel x:Key="ViewModel"/>
     </Window.Resources>

@@ -20,7 +20,10 @@ public partial class App : Application
                 !window.DialogResult
                        .Value)
             {
-                MessageBox.Show("Error");
+                MessageBox.Show(messageBoxText: "The application can't run without a valid configuration, shutting down.",
+                                caption: "Invalid configuration",
+                                button: MessageBoxButton.OK,
+                                icon: MessageBoxImage.Error);
                 this.Shutdown();
                 return;
             }
@@ -33,13 +36,21 @@ public partial class App : Application
         String path = Path.Combine(Environment.CurrentDirectory,
                                    $"{Preferences.Current.Locale}.locale");
         FileInfo file = new(path);
-        if (!file.Exists)
+        if (Preferences.Current.Locale != "en" &&
+            !file.Exists)
         {
-            MessageBox.Show("Error, file not found");
+            MessageBox.Show(messageBoxText: "The localization file couldn't be found. The language default (english) will be displayed.",
+                            caption: "File not found",
+                            button: MessageBoxButton.OK,
+                            icon: MessageBoxImage.Asterisk);
         }
-        else if (!Localization.TryLoad(file))
+        else if (Preferences.Current.Locale != "en" && 
+                 !Localization.TryLoad(file))
         {
-            MessageBox.Show("Error, displaying english");
+            MessageBox.Show(messageBoxText: "The localization file couldn't be loaded. The language default (english) will be displayed.",
+                            caption: "File not found",
+                            button: MessageBoxButton.OK,
+                            icon: MessageBoxImage.Asterisk);
         }
 
         this.ShutdownMode = ShutdownMode.OnMainWindowClose;

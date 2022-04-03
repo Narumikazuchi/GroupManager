@@ -11,7 +11,11 @@
         DataContext="{DynamicResource ViewModel}"
         Icon="pack://application:,,,/Narumikazuchi.GroupManager;component/Resources/Group1.png"
         MinHeight="386"
-        MinWidth="386">
+        MinWidth="386"
+        Left="{Binding Source={x:Static ns:Preferences.Current}, Path=GroupOverviewWindowSize.X}"
+        Top="{Binding Source={x:Static ns:Preferences.Current}, Path=GroupOverviewWindowSize.Y}"
+        Width="{Binding Source={x:Static ns:Preferences.Current}, Path=GroupOverviewWindowSize.Width}"
+        Height="{Binding Source={x:Static ns:Preferences.Current}, Path=GroupOverviewWindowSize.Height}">
     <Window.Resources>
         <local:ViewModel x:Key="ViewModel"/>
     </Window.Resources>

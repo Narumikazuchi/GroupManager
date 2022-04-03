@@ -11,7 +11,11 @@
         Title="{Binding Source={x:Static ns:Localization.Instance}, Path=Add}"
         Icon="pack://application:,,,/Narumikazuchi.GroupManager;component/Resources/User1.png"
         MinHeight="386" 
-        MinWidth="386">
+        MinWidth="386"
+        Left="{Binding Source={x:Static ns:Preferences.Current}, Path=AddUserWindowSize.X}"
+        Top="{Binding Source={x:Static ns:Preferences.Current}, Path=AddUserWindowSize.Y}"
+        Width="{Binding Source={x:Static ns:Preferences.Current}, Path=AddUserWindowSize.Width}"
+        Height="{Binding Source={x:Static ns:Preferences.Current}, Path=AddUserWindowSize.Height}">
     <Window.Resources>
         <local:ViewModel x:Key="ViewModel"/>
     </Window.Resources>

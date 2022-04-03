@@ -59,31 +59,23 @@ partial class ViewModel : WindowViewModel
 {
     private void WindowLoaded(Window window)
     {
-        Preferences preferences = Preferences.Current;
-        window.Width = preferences.AddUserWindowSize.Width;
-        window.Height = preferences.AddUserWindowSize.Height;
-
-        Double left = preferences.AddUserWindowSize.X;
-        Double top = preferences.AddUserWindowSize.Y;
-        if (top + window.Height / 2 > SystemParameters.VirtualScreenHeight)
+        if (window.Top + window.Height / 2 > SystemParameters.VirtualScreenHeight)
         {
-            top = SystemParameters.VirtualScreenHeight - window.Height;
+            window.Top = SystemParameters.VirtualScreenHeight - window.Height;
         }
-        if (top < 0)
+        if (window.Top < 0)
         {
-            top = 0;
+            window.Top = 0;
         }
 
-        if (left + window.Width / 2 > SystemParameters.VirtualScreenWidth)
+        if (window.Left + window.Width / 2 > SystemParameters.VirtualScreenWidth)
         {
-            left = SystemParameters.VirtualScreenWidth - window.Width;
+            window.Left = SystemParameters.VirtualScreenWidth - window.Width;
         }
-        if (left < 0)
+        if (window.Left < 0)
         {
-            left = 0;
+            window.Left = 0;
         }
-        window.Top = top;
-        window.Left = left;
     }
 
     private void StartFiltering(TextBox textBox)
