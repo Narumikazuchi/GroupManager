@@ -10,5 +10,7 @@ public partial class Window : WpfWindow
     public Window()
     {
         this.InitializeComponent();
+        ThemeWatcher.Instance
+                    .WindowsThemeChanged += (s, e) => this.Dispatcher.Invoke(this.UpdateLayout);
     }
 }

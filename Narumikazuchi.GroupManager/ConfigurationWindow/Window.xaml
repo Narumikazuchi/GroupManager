@@ -8,6 +8,8 @@
         mc:Ignorable="d"
         Title="{Binding Source={x:Static ns:Localization.Instance}, Path=Configuration}"
         DataContext="{DynamicResource ViewModel}"
+        Background="{DynamicResource Background}"
+        Foreground="{DynamicResource Primary}"
         Height="256"
         Width="256"
         WindowStyle="ToolWindow"
@@ -48,7 +50,8 @@
                  Margin="8 4"
                  MaxHeight="20"
                  VerticalAlignment="Center"
-                 Text="{Binding UserOuDn}"/>
+                 Text="{Binding UserOuDn}"
+                 Style="{DynamicResource Control}"/>
 
         <TextBlock Grid.Row="2"
                    Grid.ColumnSpan="2"
@@ -62,7 +65,8 @@
                  Margin="8 4"
                  MaxHeight="20"
                  VerticalAlignment="Center"
-                 Text="{Binding GroupOuDn}"/>
+                 Text="{Binding GroupOuDn}"
+                 Style="{DynamicResource Control}"/>
 
         <Button Grid.Row="4"
                 Grid.Column="0"
@@ -70,6 +74,7 @@
                 VerticalAlignment="Center"
                 HorizontalAlignment="Right"
                 Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Save}"
+                Style="{DynamicResource Button}"
                 Command="{Binding SaveConfigurationCommand}"
                 CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
 
@@ -79,6 +84,7 @@
                 VerticalAlignment="Center"
                 HorizontalAlignment="Left"
                 Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Cancel}"
+                Style="{DynamicResource Button}"
                 Command="{Binding CloseWindowCommand}"
                 CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
     </Grid>

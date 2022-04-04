@@ -11,6 +11,9 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        ThemeWatcher.Instance
+                    .StartThemeWatching();
+
         if (!Configuration.TryLoad())
         {
             ConfigurationWindow.Window window = new();

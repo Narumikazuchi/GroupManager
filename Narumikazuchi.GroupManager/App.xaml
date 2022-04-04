@@ -4,38 +4,125 @@
              xmlns:ns="clr-namespace:Narumikazuchi.GroupManager"
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
-        <Color x:Key="Primary" R="255" G="0" B="64" A="255"/>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Themes/Light.xaml" />
+            </ResourceDictionary.MergedDictionaries>
 
-        <DataTemplate x:Key="AdsObjectTemplate" 
-                      DataType="{x:Type ns:AListItemViewModel}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition MinWidth="32"
-                                      Width="*"/>
-                    <ColumnDefinition MinWidth="128"
-                                      Width="4*"/>
-                    <ColumnDefinition MinWidth="160"
-                                      Width="5*"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition MaxHeight="48"/>
-                </Grid.RowDefinitions>
+            <SolidColorBrush x:Key="Accent" Color="{Binding Source={x:Static SystemParameters.WindowGlassColor}}" />
+            <SolidColorBrush x:Key="Accent3/5" Color="{Binding Source={x:Static SystemParameters.WindowGlassColor}}" Opacity="0.6" />
+            <SolidColorBrush x:Key="Accent4/5" Color="{Binding Source={x:Static SystemParameters.WindowGlassColor}}" Opacity="0.8" />
 
-                <Image Grid.Column="0"
-                       MaxHeight="48"
-                       Source="{Binding IconPath}"
-                       Margin="0 0 5 0"/>
-                <TextBlock Grid.Column="1"
-                           Text="{Binding Name}"
-                           Margin="5 0 0 0"
+            <Style x:Key="Button" TargetType="{x:Type Button}">
+                <Setter Property="Background"
+                Value="{DynamicResource Secondary}" />
+                <Setter Property="Foreground"
+                Value="{DynamicResource Primary}" />
+                <Setter Property="BorderBrush"
+                Value="{DynamicResource Secondary}" />
+                <Setter Property="BorderThickness"
+                Value="1" />
+
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                                <ContentPresenter VerticalAlignment="Center"
+                                          HorizontalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver"
+                     Value="True">
+                        <Setter Property="BorderBrush"
+                        Value="{DynamicResource Primary}" />
+                    </Trigger>
+                    <Trigger Property="IsEnabled"
+                     Value="False">
+                        <Setter Property="Foreground"
+                        Value="{DynamicResource Tertiary}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="Control" TargetType="{x:Type Control}">
+                <Setter Property="Background"
+                Value="{DynamicResource Background}" />
+                <Setter Property="Foreground"
+                Value="{DynamicResource Primary}" />
+                <Setter Property="BorderBrush"
+                Value="{DynamicResource Secondary}" />
+                <Setter Property="BorderThickness"
+                Value="1" />
+            </Style>
+
+            <Style x:Key="ListBoxItem" TargetType="{x:Type ListBoxItem}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                            <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                                <ContentPresenter />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver"
+                     Value="True">
+                        <Setter Property="Background"
+                        Value="{DynamicResource Accent3/5}" />
+                        <Setter Property="BorderBrush"
+                        Value="{DynamicResource Accent}" />
+                    </Trigger>
+                    <Trigger Property="IsSelected"
+                     Value="True">
+                        <Setter Property="Background"
+                        Value="{DynamicResource Accent4/5}" />
+                        <Setter Property="BorderBrush"
+                        Value="{DynamicResource Accent}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <DataTemplate x:Key="AdsObjectTemplate" 
+                          DataType="{x:Type ns:AListItemViewModel}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition MinWidth="32"
+                                          Width="*"/>
+                        <ColumnDefinition MinWidth="128"
+                                          Width="4*"/>
+                        <ColumnDefinition MinWidth="160"
+                                          Width="5*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition MaxHeight="48"/>
+                    </Grid.RowDefinitions>
+
+                    <Image Grid.Column="0"
                            MaxHeight="48"
-                           VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="2"
-                           Text="{Binding DisplayName}"
-                           Margin="5 0 0 0"
-                           MaxHeight="48"
-                           VerticalAlignment="Center"/>
-            </Grid>
-        </DataTemplate>
+                           Source="{Binding IconPath}"
+                           Margin="0 0 5 0"/>
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding Name}"
+                               Margin="5 0 0 0"
+                               MaxHeight="48"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="2"
+                               Text="{Binding DisplayName}"
+                               Margin="5 0 0 0"
+                               MaxHeight="48"
+                               VerticalAlignment="Center"/>
+                </Grid>
+            </DataTemplate>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -7,8 +7,10 @@
         xmlns:ns="clr-namespace:Narumikazuchi.GroupManager"
         xmlns:local="clr-namespace:Narumikazuchi.GroupManager.AddUserWindow"
         mc:Ignorable="d"
-        DataContext="{DynamicResource ViewModel}"
         Title="{Binding Source={x:Static ns:Localization.Instance}, Path=Add}"
+        DataContext="{DynamicResource ViewModel}"
+        Background="{DynamicResource Background}"
+        Foreground="{DynamicResource Primary}"
         Icon="pack://application:,,,/Narumikazuchi.GroupManager;component/Resources/User1.png"
         MinHeight="386" 
         MinWidth="386"
@@ -44,7 +46,8 @@
         <TextBox Grid.Row="0"
                  Margin="94 8 8 8"
                  HorizontalAlignment="Stretch"
-                 VerticalAlignment="Center">
+                 VerticalAlignment="Center"
+                 Style="{DynamicResource Control}">
             <i:Interaction.Triggers>
                 <i:EventTrigger EventName="TextChanged">
                     <i:InvokeCommandAction Command="{Binding StartFilteringCommand}"
@@ -75,9 +78,10 @@
 
                 <ns:CyclingProgress Grid.Row="0"/>
                 <Button Grid.Row="1"
-                    Margin="8"
-                    Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Cancel}"
-                    Command="{Binding CancelOperationCommand}"/>
+                        Margin="8"
+                        Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Cancel}"
+                        Style="{DynamicResource Button}"
+                        Command="{Binding CancelOperationCommand}"/>
             </Grid>
             <ListView x:Name="m_Results"
                       Grid.Row="1"
@@ -85,6 +89,8 @@
                       HorizontalAlignment="Stretch"
                       VerticalAlignment="Stretch"
                       SelectionMode="Single"
+                      Style="{DynamicResource Control}"
+                      ItemContainerStyle="{DynamicResource ListBoxItem}"
                       ItemTemplate="{DynamicResource AdsObjectTemplate}"
                       ItemsSource="{Binding Results}">
                 <i:Interaction.Triggers>
@@ -101,6 +107,7 @@
                 Margin="8 8 104 8"
                 HorizontalAlignment="Right"
                 MinWidth="88"
+                Style="{DynamicResource Button}"
                 Command="{Binding AddObjectCommand}"
                 CommandParameter="{Binding ElementName=m_Results}"/>
         <Button Grid.Row="2"
@@ -108,6 +115,7 @@
                 Margin="8"
                 HorizontalAlignment="Right"
                 MinWidth="88"
+                Style="{DynamicResource Button}"
                 Command="{Binding CancelCommand}"
                 CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
     </Grid>

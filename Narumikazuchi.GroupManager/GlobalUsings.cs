@@ -1,10 +1,14 @@
-﻿global using Narumikazuchi.Windows.Wpf;
+﻿global using Microsoft.Win32;
+global using Narumikazuchi.Windows.Wpf;
 global using System.Collections.ObjectModel;
 global using System.ComponentModel;
 global using System.Diagnostics.CodeAnalysis;
 global using System.DirectoryServices;
 global using System.DirectoryServices.AccountManagement;
+global using System.Globalization;
 global using System.IO;
+global using System.Management;
+global using System.Security.Principal;
 global using System.Text;
 global using System.Windows;
 global using System.Windows.Controls;
