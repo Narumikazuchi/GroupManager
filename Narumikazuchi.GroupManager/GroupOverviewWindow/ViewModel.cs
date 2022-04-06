@@ -140,8 +140,8 @@ partial class ViewModel : WindowViewModel
 
     private void AddMember()
     {
-        AddUserWindow.Window window = new();
-        AddUserWindow.ViewModel viewModel = (AddUserWindow.ViewModel)window.DataContext;
+        AddMemberWindow.Window window = new();
+        AddMemberWindow.ViewModel viewModel = (AddMemberWindow.ViewModel)window.DataContext;
         Boolean? result = window.ShowDialog();
 
         if (!result.HasValue ||

@@ -1,6 +1,6 @@
 ﻿using WpfWindow = System.Windows.Window;
 
-namespace Narumikazuchi.GroupManager.AddUserWindow;
+namespace Narumikazuchi.GroupManager.AddMemberWindow;
 
 /// <summary>
 /// Interaction logic for Window.xaml

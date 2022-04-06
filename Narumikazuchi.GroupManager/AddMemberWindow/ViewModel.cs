@@ -1,4 +1,4 @@
-﻿namespace Narumikazuchi.GroupManager.AddUserWindow;
+﻿namespace Narumikazuchi.GroupManager.AddMemberWindow;
 
 public sealed partial class ViewModel
 {
