@@ -12,6 +12,7 @@
         Background="{DynamicResource Background}"
         Foreground="{DynamicResource Primary}"
         Icon="pack://application:,,,/Narumikazuchi.GroupManager;component/Resources/User1.png"
+        WindowStyle="None"
         MinHeight="386" 
         MinWidth="386"
         Left="{Binding Source={x:Static ns:Preferences.Current}, Path=AddUserWindowSize.X}"
@@ -31,92 +32,143 @@
                                    CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
         </i:EventTrigger>
     </i:Interaction.Triggers>
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="32"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="48"/>
-        </Grid.RowDefinitions>
-
-        <TextBlock Grid.Row="0"
-                   Margin="8"
-                   Text="{Binding Source={x:Static ns:Localization.Instance}, Path=FilterLabel}"
-                   HorizontalAlignment="Left"
-                   VerticalAlignment="Center"/>
-        <TextBox Grid.Row="0"
-                 Margin="94 8 8 8"
-                 HorizontalAlignment="Stretch"
-                 VerticalAlignment="Center"
-                 Style="{DynamicResource Control}">
-            <i:Interaction.Triggers>
-                <i:EventTrigger EventName="TextChanged">
-                    <i:InvokeCommandAction Command="{Binding StartFilteringCommand}"
-                                           CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=TextBox}}"/>
-                </i:EventTrigger>
-            </i:Interaction.Triggers>
-        </TextBox>
-
-        <Grid Grid.Row="1">
+    <Border BorderBrush="{DynamicResource Accent}"
+            BorderThickness="1">
+        <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="32"/>
+                <RowDefinition Height="{Binding Source={x:Static SystemParameters.CaptionHeight}}"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0"
-                       Margin="8"
-                       Text="{Binding Source={x:Static ns:Localization.Instance}, Path=ResultsLabel}"/>
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Image Grid.Column="0"
+                       Source="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}, Path=Icon}"/>
+
+                <TextBlock Grid.Column="1"
+                           Margin="4 0"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Center"
+                           Text="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}, Path=Title}"/>
+
+                <Button Grid.Column="2"
+                        Content="_"
+                        MinWidth="24"
+                        Style="{DynamicResource WindowButton}"
+                        Command="{Binding MinimizeWindowCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"/>
+
+                <Button Grid.Column="3"
+                        Content="[ ]"
+                        MinWidth="24"
+                        Style="{DynamicResource WindowButton}"
+                        Command="{Binding MaximizeWindowCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"/>
+
+                <Button Grid.Column="4"
+                        Content="X"
+                        MinWidth="24"
+                        Style="{DynamicResource WindowButton}"
+                        Command="{Binding CloseWindowCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"/>
+            </Grid>
 
             <Grid Grid.Row="1"
-                  Panel.ZIndex="1"
-                  HorizontalAlignment="Center"
-                  VerticalAlignment="Center"
-                  Visibility="{Binding ProgressVisibility}">
+                  Margin="0 16 0 0">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="32"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="48"/>
                 </Grid.RowDefinitions>
 
-                <ns:CyclingProgress Grid.Row="0"/>
-                <Button Grid.Row="1"
-                        Margin="8"
-                        Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Cancel}"
-                        Style="{DynamicResource Button}"
-                        Command="{Binding CancelOperationCommand}"/>
-            </Grid>
-            <ListView x:Name="m_Results"
-                      Grid.Row="1"
-                      Margin="5"
-                      HorizontalAlignment="Stretch"
-                      VerticalAlignment="Stretch"
-                      SelectionMode="Single"
-                      Style="{DynamicResource Control}"
-                      ItemContainerStyle="{DynamicResource ListBoxItem}"
-                      ItemTemplate="{DynamicResource AdsObjectTemplate}"
-                      ItemsSource="{Binding Results}">
-                <i:Interaction.Triggers>
-                    <i:EventTrigger EventName="MouseDoubleClick">
-                        <i:InvokeCommandAction Command="{Binding AddObjectCommand}"
-                                           CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
-                    </i:EventTrigger>
-                </i:Interaction.Triggers>
-            </ListView>
-        </Grid>
+                <TextBlock Grid.Row="0"
+                           Margin="8"
+                           Text="{Binding Source={x:Static ns:Localization.Instance}, Path=FilterLabel}"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Center"/>
+                <TextBox Grid.Row="0"
+                         Margin="94 8 8 8"
+                         HorizontalAlignment="Stretch"
+                         VerticalAlignment="Center"
+                         Style="{DynamicResource Control}">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="TextChanged">
+                            <i:InvokeCommandAction Command="{Binding StartFilteringCommand}"
+                                                   CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=TextBox}}"/>
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+                </TextBox>
 
-        <Button Grid.Row="2"
-                Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Add}"
-                Margin="8 8 104 8"
-                HorizontalAlignment="Right"
-                MinWidth="88"
-                Style="{DynamicResource Button}"
-                Command="{Binding AddObjectCommand}"
-                CommandParameter="{Binding ElementName=m_Results}"/>
-        <Button Grid.Row="2"
-                Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Cancel}"
-                Margin="8"
-                HorizontalAlignment="Right"
-                MinWidth="88"
-                Style="{DynamicResource Button}"
-                Command="{Binding CancelCommand}"
-                CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
-    </Grid>
+                <Grid Grid.Row="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="32"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Margin="8"
+                               Text="{Binding Source={x:Static ns:Localization.Instance}, Path=ResultsLabel}"/>
+
+                    <Grid Grid.Row="1"
+                          Panel.ZIndex="1"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          Visibility="{Binding ProgressVisibility}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <ns:CyclingProgress Grid.Row="0"/>
+                        <Button Grid.Row="1"
+                                Margin="8"
+                                Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Cancel}"
+                                Style="{DynamicResource Button}"
+                                Command="{Binding CancelOperationCommand}"/>
+                    </Grid>
+                    <ListView x:Name="m_Results"
+                              Grid.Row="1"
+                              Margin="5"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              SelectionMode="Single"
+                              Style="{DynamicResource Control}"
+                              ItemContainerStyle="{DynamicResource ListBoxItem}"
+                              ItemTemplate="{DynamicResource AdsObjectTemplate}"
+                              ItemsSource="{Binding Results}">
+                        <i:Interaction.Triggers>
+                            <i:EventTrigger EventName="MouseDoubleClick">
+                                <i:InvokeCommandAction Command="{Binding AddObjectCommand}"
+                                                       CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
+                            </i:EventTrigger>
+                        </i:Interaction.Triggers>
+                    </ListView>
+                </Grid>
+
+                <Button Grid.Row="2"
+                        Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Add}"
+                        Margin="8 8 104 8"
+                        HorizontalAlignment="Right"
+                        MinWidth="88"
+                        Style="{DynamicResource Button}"
+                        Command="{Binding AddObjectCommand}"
+                        CommandParameter="{Binding ElementName=m_Results}"/>
+                <Button Grid.Row="2"
+                        Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Cancel}"
+                        Margin="8"
+                        HorizontalAlignment="Right"
+                        MinWidth="88"
+                        Style="{DynamicResource Button}"
+                        Command="{Binding CancelCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
+            </Grid>
+        </Grid>
+    </Border>
 </Window>

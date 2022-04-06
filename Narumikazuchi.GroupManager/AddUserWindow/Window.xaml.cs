@@ -10,6 +10,7 @@ public partial class Window : WpfWindow
     public Window()
     {
         this.InitializeComponent();
+        BorderlessWindowResizer.AttachTo(this);
         ThemeWatcher.Instance
                     .WindowsThemeChanged += (s, e) => this.Dispatcher.Invoke(this.UpdateLayout);
     }

@@ -10,82 +10,134 @@
         DataContext="{DynamicResource ViewModel}"
         Background="{DynamicResource Background}"
         Foreground="{DynamicResource Primary}"
+        Icon="pack://application:,,,/Narumikazuchi.GroupManager;component/Resources/Group1.png"
+        WindowStyle="None"
         Height="256"
         Width="256"
-        WindowStyle="ToolWindow"
         ResizeMode="NoResize">
     <Window.Resources>
         <local:ViewModel x:Key="ViewModel"/>
     </Window.Resources>
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <Border BorderBrush="{DynamicResource Accent}"
+            BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="{Binding Source={x:Static SystemParameters.CaptionHeight}}"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-        <ns:CyclingProgress Grid.Column="0"
-                            Grid.Row="0"
-                            Grid.ColumnSpan="2"
-                            Grid.RowSpan="4"
-                            Panel.ZIndex="1"
-                            Visibility="{Binding ProgressVisibility}"/>
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   Grid.ColumnSpan="2"
-                   Margin="8 4"
-                   VerticalAlignment="Center"
-                   TextWrapping="WrapWithOverflow"
-                   Text="{Binding Source={x:Static ns:Localization.Instance}, Path=UserOuDn}"/>
+                <Image Grid.Column="0"
+                       Source="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}, Path=Icon}"/>
 
-        <TextBox Grid.Row="1"
-                 Grid.ColumnSpan="2"
-                 Margin="8 4"
-                 MaxHeight="20"
-                 VerticalAlignment="Center"
-                 Text="{Binding UserOuDn}"
-                 Style="{DynamicResource Control}"/>
+                <TextBlock Grid.Column="1"
+                           Margin="4 0"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Center"
+                           Text="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}, Path=Title}"/>
 
-        <TextBlock Grid.Row="2"
-                   Grid.ColumnSpan="2"
-                   Margin="8 4"
-                   VerticalAlignment="Center"
-                   TextWrapping="WrapWithOverflow"
-                   Text="{Binding Source={x:Static ns:Localization.Instance}, Path=GroupOuDn}"/>
+                <Button Grid.Column="2"
+                        Content="_"
+                        MinWidth="24"
+                        Style="{DynamicResource WindowButton}"
+                        Command="{Binding MinimizeWindowCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"/>
 
-        <TextBox Grid.Row="3"
-                 Grid.ColumnSpan="2"
-                 Margin="8 4"
-                 MaxHeight="20"
-                 VerticalAlignment="Center"
-                 Text="{Binding GroupOuDn}"
-                 Style="{DynamicResource Control}"/>
+                <Button Grid.Column="3"
+                        Content="[ ]"
+                        MinWidth="24"
+                        Style="{DynamicResource WindowButton}"
+                        Command="{Binding MaximizeWindowCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"/>
 
-        <Button Grid.Row="4"
-                Grid.Column="0"
-                Margin="4"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Right"
-                Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Save}"
-                Style="{DynamicResource Button}"
-                Command="{Binding SaveConfigurationCommand}"
-                CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
+                <Button Grid.Column="4"
+                        Content="X"
+                        MinWidth="24"
+                        Style="{DynamicResource WindowButton}"
+                        Command="{Binding CloseWindowCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"/>
+            </Grid>
 
-        <Button Grid.Row="4"
-                Grid.Column="1"
-                Margin="4"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Left"
-                Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Cancel}"
-                Style="{DynamicResource Button}"
-                Command="{Binding CloseWindowCommand}"
-                CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
-    </Grid>
+            <Grid Grid.Row="1"
+                  Margin="0 16 0 0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <ns:CyclingProgress Grid.Column="0"
+                                    Grid.Row="0"
+                                    Grid.ColumnSpan="2"
+                                    Grid.RowSpan="4"
+                                    Panel.ZIndex="1"
+                                    Visibility="{Binding ProgressVisibility}"/>
+
+                <TextBlock Grid.Row="0"
+                           Grid.ColumnSpan="2"
+                           Margin="8 4"
+                           VerticalAlignment="Center"
+                           TextWrapping="WrapWithOverflow"
+                           Text="{Binding Source={x:Static ns:Localization.Instance}, Path=UserOuDn}"/>
+
+                <TextBox Grid.Row="1"
+                         Grid.ColumnSpan="2"
+                         Margin="8 4"
+                         MaxHeight="20"
+                         VerticalAlignment="Center"
+                         Text="{Binding UserOuDn}"
+                         Style="{DynamicResource Control}"/>
+
+                <TextBlock Grid.Row="2"
+                           Grid.ColumnSpan="2"
+                           Margin="8 4"
+                           VerticalAlignment="Center"
+                           TextWrapping="WrapWithOverflow"
+                           Text="{Binding Source={x:Static ns:Localization.Instance}, Path=GroupOuDn}"/>
+
+                <TextBox Grid.Row="3"
+                         Grid.ColumnSpan="2"
+                         Margin="8 4"
+                         MaxHeight="20"
+                         VerticalAlignment="Center"
+                         Text="{Binding GroupOuDn}"
+                         Style="{DynamicResource Control}"/>
+
+                <Button Grid.Row="4"
+                        Grid.Column="0"
+                        Margin="4"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Right"
+                        Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Save}"
+                        Style="{DynamicResource Button}"
+                        Command="{Binding SaveConfigurationCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
+
+                <Button Grid.Row="4"
+                        Grid.Column="1"
+                        Margin="4"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Left"
+                        Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Cancel}"
+                        Style="{DynamicResource Button}"
+                        Command="{Binding CloseWindowCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
+            </Grid>
+        </Grid>
+    </Border>
 </Window>

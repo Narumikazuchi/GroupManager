@@ -13,24 +13,24 @@
             <SolidColorBrush x:Key="Accent3/5" Color="{Binding Source={x:Static SystemParameters.WindowGlassColor}}" Opacity="0.6" />
             <SolidColorBrush x:Key="Accent4/5" Color="{Binding Source={x:Static SystemParameters.WindowGlassColor}}" Opacity="0.8" />
 
-            <Style x:Key="Button" TargetType="{x:Type Button}">
+            <Style x:Key="WindowButton" TargetType="{x:Type Button}">
                 <Setter Property="Background"
-                Value="{DynamicResource Secondary}" />
+                        Value="{DynamicResource Background}" />
                 <Setter Property="Foreground"
-                Value="{DynamicResource Primary}" />
-                <Setter Property="BorderBrush"
-                Value="{DynamicResource Secondary}" />
+                        Value="{DynamicResource Primary}" />
+                <Setter Property="WindowChrome.IsHitTestVisibleInChrome"
+                        Value="True" />
                 <Setter Property="BorderThickness"
-                Value="1" />
+                        Value="0" />
 
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="{x:Type Button}">
                             <Border Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}">
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
                                 <ContentPresenter VerticalAlignment="Center"
-                                          HorizontalAlignment="Center" />
+                                                  HorizontalAlignment="Center" />
                             </Border>
                         </ControlTemplate>
                     </Setter.Value>
@@ -38,27 +38,64 @@
 
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver"
-                     Value="True">
-                        <Setter Property="BorderBrush"
+                             Value="True">
+                        <Setter Property="Background"
+                                Value="{DynamicResource Accent4/5}" />
+                    </Trigger>
+                    <Trigger Property="IsPressed"
+                             Value="True">
+                        <Setter Property="Background"
+                                Value="{DynamicResource Accent}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            
+            <Style x:Key="Button" TargetType="{x:Type Button}">
+                <Setter Property="Background"
+                        Value="{DynamicResource Secondary}" />
+                <Setter Property="Foreground"
                         Value="{DynamicResource Primary}" />
+                <Setter Property="BorderBrush"
+                        Value="{DynamicResource Secondary}" />
+                <Setter Property="BorderThickness"
+                        Value="1" />
+
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                <ContentPresenter VerticalAlignment="Center"
+                                                  HorizontalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver"
+                             Value="True">
+                        <Setter Property="BorderBrush"
+                                Value="{DynamicResource Primary}" />
                     </Trigger>
                     <Trigger Property="IsEnabled"
-                     Value="False">
+                             Value="False">
                         <Setter Property="Foreground"
-                        Value="{DynamicResource Tertiary}" />
+                                Value="{DynamicResource Tertiary}" />
                     </Trigger>
                 </Style.Triggers>
             </Style>
 
             <Style x:Key="Control" TargetType="{x:Type Control}">
                 <Setter Property="Background"
-                Value="{DynamicResource Background}" />
+                        Value="{DynamicResource Background}" />
                 <Setter Property="Foreground"
-                Value="{DynamicResource Primary}" />
+                        Value="{DynamicResource Primary}" />
                 <Setter Property="BorderBrush"
-                Value="{DynamicResource Secondary}" />
+                        Value="{DynamicResource Secondary}" />
                 <Setter Property="BorderThickness"
-                Value="1" />
+                        Value="1" />
             </Style>
 
             <Style x:Key="ListBoxItem" TargetType="{x:Type ListBoxItem}">
@@ -66,8 +103,8 @@
                     <Setter.Value>
                         <ControlTemplate TargetType="{x:Type ListBoxItem}">
                             <Border Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}">
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
                                 <ContentPresenter />
                             </Border>
                         </ControlTemplate>
@@ -76,18 +113,18 @@
 
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver"
-                     Value="True">
+                             Value="True">
                         <Setter Property="Background"
-                        Value="{DynamicResource Accent3/5}" />
+                                Value="{DynamicResource Accent3/5}" />
                         <Setter Property="BorderBrush"
-                        Value="{DynamicResource Accent}" />
+                                Value="{DynamicResource Accent}" />
                     </Trigger>
                     <Trigger Property="IsSelected"
-                     Value="True">
+                             Value="True">
                         <Setter Property="Background"
-                        Value="{DynamicResource Accent4/5}" />
+                                Value="{DynamicResource Accent4/5}" />
                         <Setter Property="BorderBrush"
-                        Value="{DynamicResource Accent}" />
+                                Value="{DynamicResource Accent}" />
                     </Trigger>
                 </Style.Triggers>
             </Style>
