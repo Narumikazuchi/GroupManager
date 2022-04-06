@@ -18,7 +18,7 @@ Security Hint: Although not yet possible, I'm planning to include the option to 
 ![Logo](../main/docs/AddMemberWindow.png)  
 
 ## Localization
-The application supports the use of different display languages. While the configuration is not yet fully implemented in the User Interface, you can edit the "locale" attribute in the preferences file located in %APPDATA%\Roaming\Narumikazuchi\GroupManager\user.preferences. Just make sure to also place the associated language file in the root directory of the application. While I myself can only provide an english and a german translation, I will point to [this]() repository where you can find other translation files created by the community.  
+The application supports the use of different display languages. While the configuration is not yet fully implemented in the User Interface, you can edit the "locale" attribute in the preferences file located in %APPDATA%\Roaming\Narumikazuchi\GroupManager\user.preferences. Just make sure to also place the associated language file in the root directory of the application. While I myself can only provide an english and a german translation, I will point to [this](https://github.com/Narumikazuchi/GroupManager_Languages) repository where you can find other translation files created by the community.  
 
 ## User Interface
 The application is designed in a way, where it will adopt the current theme of windows, including the chosen accent color.
