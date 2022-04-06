@@ -22,6 +22,10 @@
     <Window.Resources>
         <local:ViewModel x:Key="ViewModel"/>
     </Window.Resources>
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="{Binding Source={x:Static SystemParameters.CaptionHeight}}"
+                      ResizeBorderThickness="8"/>
+    </WindowChrome.WindowChrome>
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <i:InvokeCommandAction Command="{Binding WindowLoadedCommand}"

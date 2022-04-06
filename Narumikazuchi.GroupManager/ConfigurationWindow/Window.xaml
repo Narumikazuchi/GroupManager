@@ -18,6 +18,10 @@
     <Window.Resources>
         <local:ViewModel x:Key="ViewModel"/>
     </Window.Resources>
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="{Binding Source={x:Static SystemParameters.CaptionHeight}}"
+                      ResizeBorderThickness="8"/>
+    </WindowChrome.WindowChrome>
     <Border BorderBrush="{DynamicResource Accent}"
             BorderThickness="1">
         <Grid>
