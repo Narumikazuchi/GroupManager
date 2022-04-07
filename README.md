@@ -1,5 +1,5 @@
 # GroupManager
-A nifty little tool designed to allow manager of an Active Directory Security Group to add and remove members from that group.
+A nifty little tool designed to allow a manager of an Active Directory Security Group to add and remove members from that group.
 
 ## Configuration
 On first startup the application will open a configuration window. This window will ask the user to input the distinguished name (DN) of the organizational unit (OU) in where the application will find all users and groups it needs to know. This configuration will be stored permanently in the "C:\ProgramData\Narumikazuchi\GroupManager" directory.
