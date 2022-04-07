@@ -10,11 +10,11 @@ It is currently planned to implement a deployment method for enterprises, so tha
 ## Navigation
 The navigation of the application is conceivably easy.  
 Upon startup the application already attempts to retrieve all group of which the currently logged on user is the manager of. In the event that it fails, the user can hit the "Reload List" button. Afterwards the user can just choose which group he wants to edit the members of.  
-![Logo](../main/docs/MainWindow.png)  
+![Logo](../release/docs/MainWindow.png)  
 In this window the user can either select a member to remove or choose to add a new member to the group.  
-![Logo](../main/docs/GroupOverviewWindow.png)  
+![Logo](../release/docs/GroupOverviewWindow.png)  
 This window allows the end user to precisely filter the users and groups in either the configured OU or the sepcified security group.  
-![Logo](../main/docs/AddMemberWindow.png)  
+![Logo](../release/docs/AddMemberWindow.png)  
 
 ## Localization
 The application supports the use of different display languages. Make sure to also place the associated language file in the root directory of the application. While I myself can only provide an english and a german translation, I will point to [this](https://github.com/Narumikazuchi/GroupManager_Languages) repository where you can find other translation files created by the community.  
