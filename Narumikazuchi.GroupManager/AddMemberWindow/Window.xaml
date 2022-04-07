@@ -51,6 +51,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <Image Grid.Column="0"
@@ -62,21 +63,28 @@
                            VerticalAlignment="Center"
                            Text="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}, Path=Title}"/>
 
-                <Button Grid.Column="2"
+                <ComboBox Grid.Column="2"
+                          VerticalAlignment="Center"
+                          SelectedIndex="{Binding Source={x:Static ns:Localization.Instance}, Path=SelectedLocaleIndex, Mode=TwoWay}"
+                          ItemsSource="{Binding Source={x:Static ns:Localization.AvailableLanguages}}"
+                          ItemContainerStyle="{DynamicResource ComboBoxItem}"
+                          Style="{DynamicResource WindowComboBox}"/>
+
+                <Button Grid.Column="3"
                         Content="_"
                         MinWidth="24"
                         Style="{DynamicResource WindowButton}"
                         Command="{Binding MinimizeWindowCommand}"
                         CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"/>
 
-                <Button Grid.Column="3"
+                <Button Grid.Column="4"
                         Content="[ ]"
                         MinWidth="24"
                         Style="{DynamicResource WindowButton}"
                         Command="{Binding MaximizeWindowCommand}"
                         CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"/>
 
-                <Button Grid.Column="4"
+                <Button Grid.Column="5"
                         Content="X"
                         MinWidth="24"
                         Style="{DynamicResource WindowButton}"

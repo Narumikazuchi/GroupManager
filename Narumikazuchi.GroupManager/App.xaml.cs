@@ -1,6 +1,4 @@
-﻿using Path = System.IO.Path;
-
-namespace Narumikazuchi.GroupManager;
+﻿namespace Narumikazuchi.GroupManager;
 
 /// <summary>
 /// Interaction logic for App.xaml
@@ -36,21 +34,26 @@ public partial class App : Application
             Preferences.Current
                        .Save();
         }
-        String path = Path.Combine(Environment.CurrentDirectory,
-                                   $"{Preferences.Current.Locale}.locale");
-        FileInfo file = new(path);
-        if (Preferences.Current.Locale != "en" &&
-            !file.Exists)
+
+        if (Preferences.Current
+                       .Locale is null)
+        {
+            Localization.Instance
+                        .Locale = Configuration.Current
+                                               .DefaultLocale;
+        }
+        else
+        {
+            Localization.Instance
+                        .Locale = Preferences.Current
+                                             .Locale;
+        }
+
+        if (Localization.Instance
+                        .Locale != "en" &&
+            !Localization.TryLoad())
         {
             MessageBox.Show(messageBoxText: "The localization file couldn't be found. The language default (english) will be displayed.",
-                            caption: "File not found",
-                            button: MessageBoxButton.OK,
-                            icon: MessageBoxImage.Asterisk);
-        }
-        else if (Preferences.Current.Locale != "en" && 
-                 !Localization.TryLoad(file))
-        {
-            MessageBox.Show(messageBoxText: "The localization file couldn't be loaded. The language default (english) will be displayed.",
                             caption: "File not found",
                             button: MessageBoxButton.OK,
                             icon: MessageBoxImage.Asterisk);

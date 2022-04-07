@@ -116,17 +116,13 @@ public sealed partial class Preferences
         Rect main = new();
         Rect add = new();
         Rect group = new();
-        String? locale = "default";
+        String? locale = null;
         while (reader.Read())
         {
             if (reader.NodeType is XmlNodeType.Element &&
                 reader.Name == "preferences")
             {
                 locale = reader.GetAttribute("locale");
-                if (locale is null)
-                {
-                    locale = "default";
-                }
                 continue;
             }
             String? type;
@@ -233,18 +229,10 @@ public sealed partial class Preferences
         set;
     }
 
-    public String Locale
+    public String? Locale
     {
-        get => m_Locale;
-        set
-        {
-            if (String.IsNullOrWhiteSpace(value))
-            {
-                m_Locale = "default";
-                return;
-            }
-            m_Locale = value;
-        }
+        get;
+        set;
     }
 }
 
@@ -253,5 +241,4 @@ partial class Preferences
 {
     private static readonly DirectoryInfo s_Directory;
     private static readonly FileInfo s_File;
-    private String m_Locale = "default";
 }

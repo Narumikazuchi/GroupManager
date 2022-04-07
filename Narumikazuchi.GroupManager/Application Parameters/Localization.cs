@@ -1,9 +1,20 @@
-﻿namespace Narumikazuchi.GroupManager;
+﻿using Path = System.IO.Path;
+
+namespace Narumikazuchi.GroupManager;
 
 public sealed partial class Localization
 {
-    public static Boolean TryLoad(FileInfo file)
+    static Localization()
     {
+        s_Languages = new(LoadLanguages);
+    }
+
+    public static Boolean TryLoad()
+    {
+        String path = Path.Combine(Environment.CurrentDirectory,
+                                   $"{Instance.Locale}.locale");
+        FileInfo file = new(path);
+
         if (!file.Exists)
         {
             return false;
@@ -15,7 +26,6 @@ public sealed partial class Localization
                                       share: FileShare.Read);
         using XmlReader reader = XmlReader.Create(input: stream);
 
-        Localization localization = new();
         while (reader.Read())
         {
             String? key;
@@ -36,93 +46,172 @@ public sealed partial class Localization
                 switch (key)
                 {
                     case nameof(MainTitle):
-                        localization.m_MainTitle = value;
+                        Instance.m_MainTitle = value;
                         break;
                     case nameof(ReloadList):
-                        localization.m_ReloadList = value;
+                        Instance.m_ReloadList = value;
                         break;
                     case nameof(ShowMembers):
-                        localization.m_ShowMembers = value;
+                        Instance.m_ShowMembers = value;
                         break;
                     case nameof(Close):
-                        localization.m_Close = value;
+                        Instance.m_Close = value;
                         break;
                     case nameof(Add):
-                        localization.m_Add = value;
+                        Instance.m_Add = value;
                         break;
                     case nameof(Remove):
-                        localization.m_Remove = value;
+                        Instance.m_Remove = value;
                         break;
                     case nameof(Cancel):
-                        localization.m_Cancel = value;
+                        Instance.m_Cancel = value;
                         break;
                     case nameof(FilterLabel):
-                        localization.m_FilterLabel = value;
+                        Instance.m_FilterLabel = value;
                         break;
                     case nameof(ResultsLabel):
-                        localization.m_ResultsLabel = value;
+                        Instance.m_ResultsLabel = value;
                         break;
                     case nameof(Configuration):
-                        localization.m_Configuration = value;
+                        Instance.m_Configuration = value;
                         break;
-                    case nameof(UserOuDn):
-                        localization.m_UserOuDn = value;
+                    case nameof(DefaultLocale):
+                        Instance.m_DefaultLocale = value;
+                        break;
+                    case nameof(UseGroup):
+                        Instance.m_UseGroup = value;
+                        break;
+                    case nameof(PrincipalOuDn):
+                        Instance.m_PrincipalOuDn = value;
                         break;
                     case nameof(GroupOuDn):
-                        localization.m_GroupOuDn = value;
+                        Instance.m_GroupOuDn = value;
+                        break;
+                    case nameof(PrincipalGroupDn):
+                        Instance.m_PrincipalGroupDn = value;
+                        break;
+                    case nameof(GroupsGroupDn):
+                        Instance.m_GroupsGroupDn = value;
                         break;
                     case nameof(Save):
-                        localization.m_Save = value;
+                        Instance.m_Save = value;
                         break;
                     case nameof(Manager):
-                        localization.m_Manager = value;
+                        Instance.m_Manager = value;
                         break;
                     case nameof(Unknown):
-                        localization.m_Unknown = value;
+                        Instance.m_Unknown = value;
                         break;
                     case nameof(MembersOf):
-                        localization.m_MembersOf = value;
+                        Instance.m_MembersOf = value;
                         break;
                     case nameof(Group):
-                        localization.m_Group = value;
+                        Instance.m_Group = value;
                         break;
                     case nameof(Status):
-                        localization.m_Status = value;
+                        Instance.m_Status = value;
                         break;
                     case nameof(StatusLoading):
-                        localization.m_StatusLoading = value;
+                        Instance.m_StatusLoading = value;
                         break;
                     case nameof(StatusDone):
-                        localization.m_StatusDone = value;
+                        Instance.m_StatusDone = value;
                         break;
-                    case nameof(FailedToOpenOU):
-                        localization.m_FailedToOpenOU = value;
+                    case nameof(UserIsNotPartOfDomain):
+                        Instance.m_UserIsNotPartOfDomain = value;
+                        break;
+                    case nameof(FailedToFindAdsObject):
+                        Instance.m_FailedToFindAdsObject = value;
                         break;
                     case nameof(FailedToAdd):
-                        localization.m_FailedToAdd = value;
+                        Instance.m_FailedToAdd = value;
                         break;
                     case nameof(FailedToRemove):
-                        localization.m_FailedToRemove = value;
+                        Instance.m_FailedToRemove = value;
                         break;
                     case nameof(FailedToFindObject):
-                        localization.m_FailedToFindObject = value;
+                        Instance.m_FailedToFindObject = value;
                         break;
                     case nameof(NoObjectsFound):
-                        localization.m_NoObjectsFound = value;
+                        Instance.m_NoObjectsFound = value;
                         break;
                 }
                 continue;
             }
         }
-        Instance = localization;
         return true;
     }
 
-    public static Localization Instance
+    public String Locale
     {
-        get;
-        set;
-    } = new();
+        get => m_Locale;
+        set
+        {
+            m_Locale = value;
+            if (TryLoad())
+            {
+                this.OnPropertyChanged(nameof(this.MainTitle));
+                this.OnPropertyChanged(nameof(this.ReloadList));
+                this.OnPropertyChanged(nameof(this.ShowMembers));
+                this.OnPropertyChanged(nameof(this.Close));
+                this.OnPropertyChanged(nameof(this.Add));
+                this.OnPropertyChanged(nameof(this.Remove));
+                this.OnPropertyChanged(nameof(this.Cancel));
+                this.OnPropertyChanged(nameof(this.FilterLabel));
+                this.OnPropertyChanged(nameof(this.ResultsLabel));
+                this.OnPropertyChanged(nameof(this.Configuration));
+                this.OnPropertyChanged(nameof(this.DefaultLocale));
+                this.OnPropertyChanged(nameof(this.UseGroup));
+                this.OnPropertyChanged(nameof(this.PrincipalOuDn));
+                this.OnPropertyChanged(nameof(this.GroupOuDn));
+                this.OnPropertyChanged(nameof(this.PrincipalGroupDn));
+                this.OnPropertyChanged(nameof(this.GroupsGroupDn));
+                this.OnPropertyChanged(nameof(this.Save));
+                this.OnPropertyChanged(nameof(this.Manager));
+                this.OnPropertyChanged(nameof(this.Unknown));
+                this.OnPropertyChanged(nameof(this.MembersOf));
+                this.OnPropertyChanged(nameof(this.Group));
+                this.OnPropertyChanged(nameof(this.Status));
+                this.OnPropertyChanged(nameof(this.StatusLoading));
+                this.OnPropertyChanged(nameof(this.StatusDone));
+                this.OnPropertyChanged(nameof(this.UserIsNotPartOfDomain));
+                this.OnPropertyChanged(nameof(this.FailedToFindAdsObject));
+                this.OnPropertyChanged(nameof(this.FailedToAdd));
+                this.OnPropertyChanged(nameof(this.FailedToRemove));
+                this.OnPropertyChanged(nameof(this.FailedToFindObject));
+                this.OnPropertyChanged(nameof(this.NoObjectsFound));
+                if (m_Locale != GroupManager.Configuration.Current
+                                                          .DefaultLocale)
+                {
+                    Preferences.Current
+                               .Locale = m_Locale;
+                    Preferences.Current
+                               .Save();
+                }
+                if (AvailableLanguages[this.SelectedLocaleIndex] != m_Locale)
+                {
+                    m_LocaleIndex = ((List<String>)AvailableLanguages).IndexOf(m_Locale);
+                    this.OnPropertyChanged(nameof(this.SelectedLocaleIndex));
+                }
+            }
+        }
+    }
+
+    public Int32 SelectedLocaleIndex
+    {
+        get => m_LocaleIndex;
+        set
+        {
+            m_LocaleIndex = value;
+            this.Locale = AvailableLanguages[value];
+            this.OnPropertyChanged(nameof(this.SelectedLocaleIndex));
+        }
+    }
+
+    public static IReadOnlyList<String> AvailableLanguages =>
+        s_Languages.Value;
+
+    public static Localization Instance { get; } = new();
 
     public String MainTitle =>
         m_MainTitle;
@@ -154,11 +243,23 @@ public sealed partial class Localization
     public String Configuration =>
         m_Configuration;
 
-    public String UserOuDn =>
-        m_UserOuDn;
+    public String DefaultLocale =>
+        m_DefaultLocale;
+
+    public String UseGroup =>
+        m_UseGroup;
+
+    public String PrincipalOuDn =>
+        m_PrincipalOuDn;
 
     public String GroupOuDn =>
         m_GroupOuDn;
+
+    public String PrincipalGroupDn =>
+        m_PrincipalGroupDn;
+
+    public String GroupsGroupDn =>
+        m_GroupsGroupDn;
 
     public String Save =>
         m_Save;
@@ -184,8 +285,11 @@ public sealed partial class Localization
     public String StatusDone =>
         m_StatusDone;
 
-    public String FailedToOpenOU =>
-        m_FailedToOpenOU;
+    public String UserIsNotPartOfDomain =>
+        m_UserIsNotPartOfDomain;
+
+    public String FailedToFindAdsObject =>
+        m_FailedToFindAdsObject;
 
     public String FailedToAdd =>
         m_FailedToAdd;
@@ -203,6 +307,23 @@ public sealed partial class Localization
 // Non-Public
 partial class Localization
 {
+    private Localization()
+    { }
+
+    private static IReadOnlyList<String> LoadLanguages()
+    {
+        List<String> languages = new();
+        DirectoryInfo directory = new(Environment.CurrentDirectory);
+        languages.AddRange(directory.EnumerateFiles("*.locale")
+                                    .Select(x => x.Name.Replace(oldValue: ".locale",
+                                                                newValue: ""))
+                                    .Prepend("en"));
+        return languages;
+    }
+
+    private static readonly Lazy<IReadOnlyList<String>> s_Languages;
+    private String m_Locale = "en";
+    private Int32 m_LocaleIndex = 0;
     private String m_MainTitle = "Group Manager";
     private String m_ReloadList = "Reload list";
     private String m_ShowMembers = "Show members";
@@ -210,11 +331,15 @@ partial class Localization
     private String m_Add = "Add";
     private String m_Remove = "Remove";
     private String m_Cancel = "Cancel";
-    private String m_FilterLabel = "Filter by: ";
-    private String m_ResultsLabel = "Results: ";
+    private String m_FilterLabel = "Filter by:";
+    private String m_ResultsLabel = "Results:";
     private String m_Configuration = "Configuration";
-    private String m_UserOuDn = "Distinguished Name of the Organisational Unit containing all users:";
-    private String m_GroupOuDn = "Distinguished Name of the Organisational Unit containing all groups:";
+    private String m_DefaultLocale = "Default language:";
+    private String m_UseGroup = "Use Security Group";
+    private String m_PrincipalOuDn = "Distinguished Name of the Organisational Unit containing the accessible principals:";
+    private String m_GroupOuDn = "Distinguished Name of the Organisational Unit containing the managed groups:";
+    private String m_PrincipalGroupDn = "Distinguished Name of the Security Group that contains the accessible principals:";
+    private String m_GroupsGroupDn = "Distinguished Name of the Security Group that contains the managed groups:";
     private String m_Save = "Save";
     private String m_Manager = "Manager: {0}";
     private String m_Unknown = "unknown";
@@ -223,9 +348,21 @@ partial class Localization
     private String m_Status = "Status: {0}";
     private String m_StatusLoading = "loading...";
     private String m_StatusDone = "done";
-    private String m_FailedToOpenOU = "Couldn't open the OU with the distinguished name '{0}'.";
+    private String m_UserIsNotPartOfDomain = "The currently logged in user is not part of a domain.";
+    private String m_FailedToFindAdsObject = "Couldn't find the AdsObject with the distinguished name '{0}'.";
     private String m_FailedToAdd = "Couldn't add the object with the distinguished name '{0}' to the group.";
     private String m_FailedToRemove = "Couldn't remove the object with the distinguished name '{0}' from the group.";
-    private String m_FailedToFindObject = "Couldn't the object with the sAMAccountName '{0}'.";
-    private String m_NoObjectsFound = "Couldn't find anz objects.";
+    private String m_FailedToFindObject = "Couldn't find the object with the sAMAccountName '{0}'.";
+    private String m_NoObjectsFound = "Couldn't find any objects.";
+}
+
+// INotifyPropertyChanged
+partial class Localization : INotifyPropertyChanged
+{
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged(String propertyName) =>
+        this.PropertyChanged?
+            .Invoke(sender: this,
+                    e: new(propertyName));
 }
