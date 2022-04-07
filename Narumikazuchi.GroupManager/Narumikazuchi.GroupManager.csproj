@@ -10,7 +10,12 @@
 		<LangVersion>preview</LangVersion>
 		<EnablePreviewFeatures>True</EnablePreviewFeatures>
 		<ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+		<ApplicationIcon>Resources\Logo.ico</ApplicationIcon>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <Content Include="Resources\Logo.ico" />
+	</ItemGroup>
 
 	<ItemGroup>
 	  <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
