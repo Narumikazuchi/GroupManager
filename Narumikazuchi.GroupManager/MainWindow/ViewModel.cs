@@ -155,26 +155,39 @@ partial class ViewModel : WindowViewModel
         }
 
         UserPrincipal user = UserPrincipal.Current;
+        if (user.ContextType is not ContextType.Domain)
+        {
+            MessageBox.Show(messageBoxText: Localization.Instance
+                                                        .UserIsNotPartOfDomain,
+                            caption: "Not part of domain",
+                            button: MessageBoxButton.OK,
+                            icon: MessageBoxImage.Error);
+            return;
+        }
+
         if (cancellationToken.IsCancellationRequested)
         {
             return;
         }
+
         this.Manager = user.DisplayName ?? user.Name;
         if (cancellationToken.IsCancellationRequested)
         {
             return;
         }
-        IReadOnlyList<DirectoryEntry> groups = GetGroups(user.SamAccountName);
+
+        IReadOnlyList<DirectoryEntry> groups = GetGroups(user.DistinguishedName);
         if (cancellationToken.IsCancellationRequested)
         {
             return;
         }
+
         foreach (DirectoryEntry entry in groups)
         {
             Application.Current
-                        .Dispatcher
-                        .Invoke(() => this.ManagedGroups
-                                            .Add(new GroupListItemViewModel(entry)));
+                       .Dispatcher
+                       .Invoke(() => this.ManagedGroups
+                                         .Add(new GroupListItemViewModel(entry)));
             if (cancellationToken.IsCancellationRequested)
             {
                 this.Reset();
@@ -183,53 +196,33 @@ partial class ViewModel : WindowViewModel
         }
     }
 
-    private static IReadOnlyList<DirectoryEntry> GetGroups(String samAccountName)
+    private static IReadOnlyList<DirectoryEntry> GetGroups(String dn)
     {
         Configuration configuration = Configuration.Current;
-        if (!ActiveDirectoryInterface.TryGetOU(dn: configuration.UserOuDn,
-                                               ou: out DirectoryEntry? userOu))
-        {
-            MessageBox.Show(messageBoxText: String.Format(format: Localization.Instance
-                                                                              .FailedToOpenOU,
-                                                          arg0: configuration.UserOuDn),
-                            caption: "Failed to open OU",
-                            button: MessageBoxButton.OK,
-                            icon: MessageBoxImage.Error);
-            return Array.Empty<DirectoryEntry>();
-        }
-        if (!ActiveDirectoryInterface.TryGetUserBySAMAccountName(ou: userOu,
-                                                                 samAccountName: samAccountName,
-                                                                 out DirectoryEntry? user))
+        if (!ActiveDirectoryInterface.TryGetPrincipalByDN(dn: dn,
+                                                          out DirectoryEntry? user))
         {
             MessageBox.Show(messageBoxText: String.Format(format: Localization.Instance
                                                                               .FailedToFindObject,
-                                                          arg0: samAccountName),
+                                                          arg0: dn),
                             caption: "Failed to find object",
                             button: MessageBoxButton.OK,
                             icon: MessageBoxImage.Error);
             return Array.Empty<DirectoryEntry>();
         }
-        if (!ActiveDirectoryInterface.TryGetOU(dn: configuration.GroupOuDn,
-                                               ou: out DirectoryEntry? groupOu))
+
+        if (!ActiveDirectoryInterface.TryGetGroupsManagedByUser(user: user,
+                                                                groups: out IEnumerable<DirectoryEntry>? groups))
         {
             MessageBox.Show(messageBoxText: String.Format(format: Localization.Instance
-                                                                              .FailedToOpenOU,
-                                                          arg0: configuration.GroupOuDn),
+                                                                              .FailedToFindAdsObject,
+                                                          arg0: configuration.ManagedGroupsDn),
                             caption: "Failed to open OU",
                             button: MessageBoxButton.OK,
                             icon: MessageBoxImage.Error);
             return Array.Empty<DirectoryEntry>();
         }
-        if (!ActiveDirectoryInterface.TryGetGroupsManagedByUser(ou: groupOu,
-                                                                user: user,
-                                                                groups: out IEnumerable<DirectoryEntry>? groups))
-        {
-            MessageBox.Show(messageBoxText: Localization.Instance.NoObjectsFound,
-                            caption: "No objects found",
-                            button: MessageBoxButton.OK,
-                            icon: MessageBoxImage.Error);
-            return Array.Empty<DirectoryEntry>();
-        }
+
         return new List<DirectoryEntry>(collection: groups);
     }
 

@@ -34,13 +34,26 @@ public sealed partial class Configuration
         };
 
         writer.WriteStartElement("configuration");
-        writer.WriteStartElement("userou");
+        writer.WriteAttributeString(localName: "locale",
+                                    value: this.DefaultLocale);
+
+        writer.WriteStartElement("userdn");
         writer.WriteAttributeString(localName: "dn",
-                                    value: this.UserOuDn);
+                                    value: this.PrincipalsDn);
+        if (this.UseGroupsForPrincipals)
+        {
+            writer.WriteAttributeString(localName: "useGroup",
+                                        value: "true");
+        }
         writer.WriteEndElement();
-        writer.WriteStartElement("groupou");
+        writer.WriteStartElement("groupdn");
         writer.WriteAttributeString(localName: "dn",
-                                    value: this.GroupOuDn);
+                                    value: this.ManagedGroupsDn);
+        if (this.UseGroupsForGroups)
+        {
+            writer.WriteAttributeString(localName: "useGroup",
+                                        value: "true");
+        }
         writer.WriteEndElement();
         writer.WriteEndElement();
         writer.Flush();
@@ -59,39 +72,77 @@ public sealed partial class Configuration
                                       share: FileShare.Read);
         using XmlReader reader = XmlReader.Create(input: stream);
 
-        String userOu = String.Empty;
-        String groupOu = String.Empty;
+        String locale = String.Empty;
+        String userDn = String.Empty;
+        String groupDn = String.Empty;
+        Boolean useGroupForUsers = false;
+        Boolean useGroupForGroups = false;
         while (reader.Read())
         {
             String? dn;
             if (reader.NodeType is XmlNodeType.Element &&
-                reader.Name == "userou")
+                reader.Name == "configuration")
             {
+                String? defaultLocale = reader.GetAttribute("locale");
+                if (defaultLocale is null)
+                {
+                    locale = "en";
+                    continue;
+                }
+                locale = defaultLocale;
+                continue;
+            }
+
+            if (reader.NodeType is XmlNodeType.Element &&
+                reader.Name == "userdn")
+            {
+                String? useGroupAttr = reader.GetAttribute("useGroup");
+                if (useGroupAttr is not null)
+                {
+                    useGroupForUsers = true;
+                }
+
                 dn = reader.GetAttribute("dn");
                 if (dn is null)
                 {
                     return false;
                 }
-                userOu = dn;
+                userDn = dn;
                 continue;
             }
             if (reader.NodeType is XmlNodeType.Element &&
-                reader.Name == "groupou")
+                reader.Name == "groupdn")
             {
+                String? useGroupAttr = reader.GetAttribute("useGroup");
+                if (useGroupAttr is not null)
+                {
+                    useGroupForGroups = true;
+                }
+
                 dn = reader.GetAttribute("dn");
                 if (dn is null)
                 {
                     return false;
                 }
-                groupOu = dn;
+                groupDn = dn;
                 continue;
             }
         }
+
+        if (!Localization.AvailableLanguages.Any(x => x == locale))
+        {
+            locale = "en";
+        }
+
         Current = new()
         {
-            UserOuDn = userOu,
-            GroupOuDn = groupOu
+            DefaultLocale = locale,
+            UseGroupsForPrincipals = useGroupForUsers,
+            PrincipalsDn = userDn,
+            UseGroupsForGroups = useGroupForGroups,
+            ManagedGroupsDn = groupDn
         };
+
         return true;
     }
 
@@ -101,13 +152,31 @@ public sealed partial class Configuration
         set;
     } = new();
 
-    public String UserOuDn
+    public String DefaultLocale
+    {
+        get;
+        set;
+    } = "en";
+
+    public Boolean UseGroupsForPrincipals
+    {
+        get;
+        set;
+    }
+
+    public String PrincipalsDn
     {
         get;
         set;
     } = String.Empty;
 
-    public String GroupOuDn
+    public Boolean UseGroupsForGroups
+    {
+        get;
+        set;
+    }
+
+    public String ManagedGroupsDn
     {
         get;
         set;

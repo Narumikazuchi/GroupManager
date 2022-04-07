@@ -22,7 +22,7 @@ public sealed partial class ViewModel
     {
         this.Title = group.DisplayName ?? Localization.Instance.Unknown;
         this.GroupName = group.DisplayName ?? Localization.Instance.Unknown;
-        m_AdsObject = group.AdsObject;
+        m_Principal = group.AdsObject;
     }
 
     public String Title
@@ -146,32 +146,29 @@ partial class ViewModel : WindowViewModel
 
         if (!result.HasValue ||
             !result.Value ||
-            viewModel.AdsObject is null)
+            viewModel.Principal is null)
         {
             return;
         }
 
-        IReadOnlyList<String> classes = ActiveDirectoryInterface.CastPropertyToStringArray(adsObject: viewModel.AdsObject,
-                                                                                           property: "objectClass");
-        foreach (String objClass in classes)
+        if (viewModel.Principal
+                     .IsUser())
         {
-            if (objClass == "user")
-            {
-                this.Members
-                    .Add(new UserListItemViewModel(viewModel.AdsObject));
-            }
-            else if (objClass == "group")
-            {
-                this.Members
-                    .Add(new GroupListItemViewModel(viewModel.AdsObject));
-            }
+            this.Members
+                .Add(new UserListItemViewModel(viewModel.Principal));
+        }
+        else if (viewModel.Principal
+                          .IsGroup())
+        {
+            this.Members
+                .Add(new GroupListItemViewModel(viewModel.Principal));
         }
 
-        String dn = viewModel.AdsObject
+        String dn = viewModel.Principal
                              .Path
                              .Remove(0, 7);
-        if (!ActiveDirectoryInterface.TryAddObjectToGroup(group: m_AdsObject!,
-                                                          objectDn: dn))
+        if (!ActiveDirectoryInterface.TryAddPrincipalToGroup(group: m_Principal!,
+                                                             objectDn: dn))
         {
             MessageBox.Show(messageBoxText: String.Format(format: Localization.Instance.FailedToAdd,
                                                           arg0: dn),
@@ -198,7 +195,7 @@ partial class ViewModel : WindowViewModel
                          .Remove(0, 7);
         this.Members
             .Remove(model);
-        if (!ActiveDirectoryInterface.TryRemoveObjectFromGroup(group: m_AdsObject!,
+        if (!ActiveDirectoryInterface.TryRemovePrincipalFromGroup(group: m_Principal!,
                                                                objectDn: dn))
         {
             MessageBox.Show(messageBoxText: String.Format(format: Localization.Instance.FailedToRemove,
@@ -233,7 +230,7 @@ partial class ViewModel : WindowViewModel
         {
             return;
         }
-        IReadOnlyList<String> memberDns = ActiveDirectoryInterface.CastPropertyToStringArray(adsObject: m_AdsObject!,
+        IReadOnlyList<String> memberDns = ActiveDirectoryInterface.CastPropertyToStringArray(adsObject: m_Principal!,
                                                                                              property: "member");
         foreach (String dn in memberDns)
         {
@@ -247,31 +244,20 @@ partial class ViewModel : WindowViewModel
                 continue;
             }
 
-            DirectoryEntry adsObject = new($"LDAP://{dn}");
-            IReadOnlyList<String> classes = ActiveDirectoryInterface.CastPropertyToStringArray(adsObject: adsObject,
-                                                                                               property: "objectClass");
-            foreach (String objClass in classes)
+            DirectoryEntry principal = new($"LDAP://{dn}");
+            if (principal.IsUser())
             {
-                if (objClass == "user")
-                {
-                    Application.Current
-                               .Dispatcher
-                               .Invoke(() => this.Members
-                                                 .Add(new UserListItemViewModel(adsObject)));
-                }
-                else if (objClass == "group")
-                {
-                    Application.Current
-                               .Dispatcher
-                               .Invoke(() => this.Members
-                                                 .Add(new GroupListItemViewModel(adsObject)));
-                }
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    this.Reset();
-                    return;
-                }
+                Application.Current
+                           .Dispatcher
+                           .Invoke(() => this.Members
+                                             .Add(new UserListItemViewModel(principal)));
+            }
+            else if (principal.IsGroup())
+            {
+                Application.Current
+                           .Dispatcher
+                           .Invoke(() => this.Members
+                                             .Add(new GroupListItemViewModel(principal)));
             }
         }
     }
@@ -329,6 +315,6 @@ partial class ViewModel : WindowViewModel
     private String m_Title = String.Empty;
     private String m_GroupName = String.Empty;
     private String m_StatusText = String.Empty;
-    private DirectoryEntry? m_AdsObject;
+    private DirectoryEntry? m_Principal;
     private CancellationTokenSource? m_TokenSource;
 }

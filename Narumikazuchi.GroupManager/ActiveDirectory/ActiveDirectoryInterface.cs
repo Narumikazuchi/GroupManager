@@ -6,7 +6,8 @@ public static partial class ActiveDirectoryInterface
                                                                   [DisallowNull] String property!!)
     {
         List<String> result = new();
-        if (adsObject.Properties[property] is null)
+        if (adsObject.Properties[property] is null ||
+            adsObject.Properties[property].Value is null)
         {
             return Array.Empty<String>();
         }
@@ -23,8 +24,8 @@ public static partial class ActiveDirectoryInterface
         return result;
     }
 
-    public static Boolean TryAddObjectToGroup([DisallowNull] DirectoryEntry group!!,
-                                              [DisallowNull] String objectDn!!)
+    public static Boolean TryAddPrincipalToGroup([DisallowNull] DirectoryEntry group!!,
+                                                 [DisallowNull] String objectDn!!)
     {
         group.Properties["member"]
              .Add(objectDn);
@@ -41,27 +42,7 @@ public static partial class ActiveDirectoryInterface
         }
     }
 
-    public static Boolean TryGetGroupsManagedByUser([DisallowNull] DirectoryEntry ou!!,
-                                                    [DisallowNull] String samAccountName!!,
-                                                    [NotNullWhen(true)] out IEnumerable<DirectoryEntry>? groups)
-    {
-        if (!TryGetUserBySAMAccountName(ou: ou,
-                                        samAccountName: samAccountName,
-                                        user: out DirectoryEntry? user))
-        {
-            groups = null;
-            TextLogger.Instance
-                      .Log("Couldn't get groups because the user with the specified sAMAccountName couldn't be found.");
-            return false;
-        }
-
-        return TryGetGroupsManagedByUser(ou: ou,
-                                         user: user,
-                                         groups: out groups);
-    }
-
-    public static Boolean TryGetGroupsManagedByUser([DisallowNull] DirectoryEntry ou!!,
-                                                    [DisallowNull] DirectoryEntry user!!,
+    public static Boolean TryGetGroupsManagedByUser([DisallowNull] DirectoryEntry user!!,
                                                     [NotNullWhen(true)] out IEnumerable<DirectoryEntry>? groups)
     {
         IReadOnlyList<String> groupDns = CastPropertyToStringArray(adsObject: user,
@@ -89,14 +70,13 @@ public static partial class ActiveDirectoryInterface
         return true;
     }
 
-    public static Boolean TryGetObjectsFilteredBy([DisallowNull] DirectoryEntry ou!!,
-                                                  [DisallowNull] String filter!!,
-                                                  in Boolean findGroups,
-                                                  [NotNullWhen(true)] out IEnumerable<DirectoryEntry>? adsObjects)
+    public static Boolean TryGetPrincipalsFilteredBy([DisallowNull] DirectoryEntry groupOrOu!!,
+                                                     [DisallowNull] String filter!!,
+                                                     [NotNullWhen(true)] out IEnumerable<DirectoryEntry>? principals)
     {
         if (String.IsNullOrWhiteSpace(filter))
         {
-            adsObjects = null;
+            principals = null;
             TextLogger.Instance
                       .Log("Couldn't get objects because the filter was empty and would've resulted in all objects in the OU.");
             return false;
@@ -105,70 +85,22 @@ public static partial class ActiveDirectoryInterface
         String[] items = filter.Split(separator: new Char[] { ' ', ',' },
                                       options: StringSplitOptions.RemoveEmptyEntries);
 
-        adsObjects = new List<DirectoryEntry>();
-
-        try
+        if (Configuration.Current.UseGroupsForPrincipals)
         {
-            using DirectorySearcher searcher = new(ou);
-
-            for (Int32 i = 0;
-                 i < items.Length;
-                 i++)
-            {
-                List<DirectoryEntry> tempResults = new();
-                searcher.Filter = ComposeFilterString(pattern: items[i],
-                                                      group: findGroups);
-                SearchResultCollection resultCollection = searcher.FindAll();
-                foreach (SearchResult result in resultCollection)
-                {
-                    tempResults.Add(result.GetDirectoryEntry());
-                }
-                adsObjects = adsObjects.Union(second: tempResults,
-                                              comparer: DirectoryEntryComparer.Default);
-            }
+            return TryGetPrincipalsFilteredByGroup(group: groupOrOu,
+                                                   filter: items.Select(x => x.ToLower()),
+                                                   principals: out principals);
         }
-        catch (Exception ex)
+        else
         {
-            TextLogger.Instance
-                      .Log(ex);
-            return false;
-        }
-
-        return true;
-    }
-
-    public static Boolean TryGetUserBySAMAccountName([DisallowNull] DirectoryEntry ou!!,
-                                                     [DisallowNull] String samAccountName,
-                                                     [NotNullWhen(true)] out DirectoryEntry? user)
-    {
-        try
-        {
-            using DirectorySearcher searcher = new(ou)
-            {
-                Filter = $"(&(|(objectClass=person)(objectClass=user))(sAMAccountName={samAccountName}))"
-            };
-            SearchResult? result = searcher.FindOne();
-            if (result is null)
-            {
-                user = null;
-                TextLogger.Instance
-                          .Log("The user with the specified sAMAccountName couldn't be found.");
-                return false;
-            }
-            user = result.GetDirectoryEntry();
-            return true;
-        }
-        catch (Exception ex)
-        {
-            TextLogger.Instance
-                      .Log(ex);
-            user = null;
-            return false;
+            return TryGetPrincipalsFilteredByOu(ou: groupOrOu,
+                                                filter: items.Select(x => x.ToLower()),
+                                                principals: out principals);
         }
     }
 
-    public static Boolean TryGetOU([DisallowNull] String dn,
-                                   [NotNullWhen(true)] out DirectoryEntry? ou)
+    public static Boolean TryGetPrincipalByDN([DisallowNull] String dn,
+                                              [NotNullWhen(true)] out DirectoryEntry? principal)
     {
         try
         {
@@ -179,25 +111,25 @@ public static partial class ActiveDirectoryInterface
             SearchResult? result = searcher.FindOne();
             if (result is null)
             {
-                ou = null;
+                principal = null;
                 TextLogger.Instance
                           .Log("The ou with the specified DN couldn't be found.");
                 return false;
             }
-            ou = result.GetDirectoryEntry();
+            principal = result.GetDirectoryEntry();
             return true;
         }
         catch (Exception ex)
         {
             TextLogger.Instance
                       .Log(ex);
-            ou = null;
+            principal = null;
             return false;
         }
     }
 
-    public static Boolean TryRemoveObjectFromGroup([DisallowNull] DirectoryEntry group,
-                                                   [DisallowNull] String objectDn)
+    public static Boolean TryRemovePrincipalFromGroup([DisallowNull] DirectoryEntry group,
+                                                      [DisallowNull] String objectDn)
     {
         group.Properties["member"]
              .Remove(objectDn);
@@ -212,6 +144,32 @@ public static partial class ActiveDirectoryInterface
                       .Log(ex);
             return false;
         }
+    }
+
+    public static Boolean IsUser(this DirectoryEntry entry)
+    {
+        if (entry.Properties["objectClass"] is null ||
+            entry.Properties["objectClass"].Value is null)
+        {
+            return false;
+        }
+
+        IReadOnlyList<String> classes = CastPropertyToStringArray(adsObject: entry,
+                                                                  property: "objectClass");
+        return classes.Any(x => x == "user");
+    }
+
+    public static Boolean IsGroup(this DirectoryEntry entry)
+    {
+        if (entry.Properties["objectClass"] is null ||
+            entry.Properties["objectClass"].Value is null)
+        {
+            return false;
+        }
+
+        IReadOnlyList<String> classes = CastPropertyToStringArray(adsObject: entry,
+                                                                  property: "objectClass");
+        return classes.Any(x => x == "group");
     }
 }
 
@@ -239,13 +197,110 @@ partial class ActiveDirectoryInterface
         return result;
     }
 
-    private static String ComposeFilterString(String pattern,
-                                              in Boolean group)
+    private static Boolean TryGetPrincipalsFilteredByOu(DirectoryEntry ou,
+                                                        IEnumerable<String> filter,
+                                                        out IEnumerable<DirectoryEntry> principals)
     {
-        if (group)
+        HashSet<DirectoryEntry> results = new(comparer: DirectoryEntryComparer.Default);
+
+        try
         {
-            return $"(&(&(objectClass=group)(!(objectClass=computer)))(|(sn={pattern}*)(givenName={pattern}*)(sAMAccountName={pattern}*)))";
+            using DirectorySearcher searcher = new(ou);
+
+            foreach (String pattern in filter)
+            {
+                List<DirectoryEntry> tempResults = new();
+                searcher.Filter = $"(&(&(|(objectClass=person)(objectClass=user)(objectClass=group))(!(objectClass=computer)))(|(sn={pattern}*)(givenName={pattern}*)(sAMAccountName={pattern}*)))";
+                SearchResultCollection resultCollection = searcher.FindAll();
+                foreach (SearchResult result in resultCollection)
+                {
+                    tempResults.Add(result.GetDirectoryEntry());
+                }
+
+                foreach (DirectoryEntry result in tempResults)
+                {
+                    results.Add(result);
+                }
+            }
         }
-        return $"(&(&(|(objectClass=person)(objectClass=user))(!(objectClass=computer)))(|(sn={pattern}*)(givenName={pattern}*)(sAMAccountName={pattern}*)))";
+        catch (Exception ex)
+        {
+            TextLogger.Instance
+                      .Log(ex);
+            principals = Array.Empty<DirectoryEntry>();
+            return false;
+        }
+        principals = results;
+        return true;
+    }
+
+    private static Boolean TryGetPrincipalsFilteredByGroup(DirectoryEntry group,
+                                                           IEnumerable<String> filter,
+                                                           out IEnumerable<DirectoryEntry> principals)
+    {
+        List<DirectoryEntry> results = new();
+
+        IReadOnlyList<String> memberDns = CastPropertyToStringArray(adsObject: group,
+                                                                    property: "member");
+
+        for (Int32 i = 0;
+             i < memberDns.Count;
+             i++)
+        {
+            try
+            {
+                if (!DirectoryEntry.Exists($"LDAP://{memberDns[i]}"))
+                {
+                    continue;
+                }
+
+                DirectoryEntry entry = new($"LDAP://{memberDns[i]}");
+
+                Boolean added = false;
+                foreach (String pattern in filter)
+                {
+                    if (entry.Properties["sn"].Value is not null
+                                                     and String sn &&
+                        sn.ToLower()
+                          .StartsWith(pattern))
+                    {
+                        results.Add(entry);
+                        added = true;
+                        break;
+                    }
+                    if (entry.Properties["givenName"].Value is not null
+                                                            and String givenName &&
+                        givenName.ToLower()
+                                 .StartsWith(pattern))
+                    {
+                        results.Add(entry);
+                        added = true;
+                        break;
+                    }
+                    if (entry.Properties["sAMAccountName"].Value is not null
+                                                                 and String sAMAccountName &&
+                        sAMAccountName.ToLower()
+                                      .StartsWith(pattern))
+                    {
+                        results.Add(entry);
+                        added = true;
+                        break;
+                    }
+                }
+
+                if (!added)
+                {
+                    entry.Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+                TextLogger.Instance
+                          .Log(ex);
+            }
+        }
+
+        principals = results;
+        return true;
     }
 }

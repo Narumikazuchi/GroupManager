@@ -17,7 +17,7 @@ public sealed partial class ViewModel
                      direction: ListSortDirection.Ascending));
     }
 
-    public DirectoryEntry? AdsObject
+    public DirectoryEntry? Principal
     {
         get;
         set;
@@ -116,9 +116,8 @@ partial class ViewModel : WindowViewModel
 
         Configuration configuration = Configuration.Current;
 
-        // Users
-        if (!ActiveDirectoryInterface.TryGetOU(dn: configuration.UserOuDn,
-                                               ou: out DirectoryEntry? userOu))
+        if (!ActiveDirectoryInterface.TryGetPrincipalByDN(dn: configuration.PrincipalsDn,
+                                                          principal: out DirectoryEntry? principalContainer))
         {
             return;
         }
@@ -127,10 +126,9 @@ partial class ViewModel : WindowViewModel
             return;
         }
 
-        if (!ActiveDirectoryInterface.TryGetObjectsFilteredBy(ou: userOu,
-                                                              filter: m_FilterParameter,
-                                                              findGroups: false,
-                                                              adsObjects: out IEnumerable<DirectoryEntry>? users))
+        if (!ActiveDirectoryInterface.TryGetPrincipalsFilteredBy(groupOrOu: principalContainer,
+                                                                 filter: m_FilterParameter,
+                                                                 principals: out IEnumerable<DirectoryEntry>? principals))
         {
             return;
         }
@@ -139,55 +137,28 @@ partial class ViewModel : WindowViewModel
             return;
         }
 
-        foreach (DirectoryEntry user in users)
+        foreach (DirectoryEntry principal in principals)
         {
             if (cancellationToken.IsCancellationRequested)
             {
                 this.Reset();
                 return;
             }
-            Application.Current
-                       .Dispatcher
-                       .Invoke(() => this.Results
-                                         .Add(new UserListItemViewModel(user)));
-        }
 
-        // Groups
-        if (!ActiveDirectoryInterface.TryGetOU(dn: configuration.GroupOuDn,
-                                               ou: out DirectoryEntry? groupOu))
-        {
-            return;
-        }
-        if (cancellationToken.IsCancellationRequested)
-        {
-            this.Reset();
-            return;
-        }
-
-        if (!ActiveDirectoryInterface.TryGetObjectsFilteredBy(ou: groupOu,
-                                                              filter: m_FilterParameter,
-                                                              findGroups: true,
-                                                              adsObjects: out IEnumerable<DirectoryEntry>? groups))
-        {
-            return;
-        }
-        if (cancellationToken.IsCancellationRequested)
-        {
-            this.Reset();
-            return;
-        }
-
-        foreach (DirectoryEntry group in groups)
-        {
-            if (cancellationToken.IsCancellationRequested)
+            if (principal.IsUser())
             {
-                this.Reset();
-                return;
+                Application.Current
+                           .Dispatcher
+                           .Invoke(() => this.Results
+                                             .Add(new UserListItemViewModel(principal)));
             }
-            Application.Current
-                       .Dispatcher
-                       .Invoke(() => this.Results
-                                         .Add(new GroupListItemViewModel(group)));
+            else if (principal.IsGroup())
+            {
+                Application.Current
+                           .Dispatcher
+                           .Invoke(() => this.Results
+                                             .Add(new GroupListItemViewModel(principal)));
+            }
         }
     }
 
@@ -211,7 +182,7 @@ partial class ViewModel : WindowViewModel
             return;
         }
 
-        this.AdsObject = model.AdsObject;
+        this.Principal = model.AdsObject;
         this.DisposeItems(model.AdsObject);
         window.DialogResult = true;
         window.Close();
@@ -219,7 +190,7 @@ partial class ViewModel : WindowViewModel
 
     private void Cancel(Window window)
     {
-        this.AdsObject = null;
+        this.Principal = null;
         this.DisposeItems();
         window.DialogResult = false;
         window.Close();
