@@ -12,8 +12,8 @@
 		<ProduceReferenceAssembly>False</ProduceReferenceAssembly>
 		<ApplicationIcon>Resources\Logo.ico</ApplicationIcon>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-		<AssemblyVersion>1.1.0-prerelease</AssemblyVersion>
-		<FileVersion>1.1.0-prerelease</FileVersion>
+		<AssemblyVersion>1.1.0</AssemblyVersion>
+		<FileVersion>1.1.0</FileVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
