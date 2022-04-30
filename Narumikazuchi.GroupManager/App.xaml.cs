@@ -38,31 +38,34 @@ public partial class App : Application
         ThemeWatcher.Instance
                     .StartThemeWatching();
 
-        if (!Configuration.TryLoad(file: Configuration.DefaultLocation,
-                                   configuration: out Configuration? configuration))
+        if (!this.FindAutoConfig())
         {
-            ConfigurationWindow.Window window = this.ServiceProvider
-                                                    .GetService<ConfigurationWindow.Window>()!;
-            window.ShowDialog();
-            if (!window.DialogResult
-                       .HasValue ||
-                !window.DialogResult
-                       .Value)
+            if (!Configuration.TryLoad(file: Configuration.DefaultLocation,
+                                       configuration: out Configuration? configuration))
             {
-                MessageBox.Show(messageBoxText: "The application can't run without a valid configuration, shutting down.",
-                                caption: "Invalid configuration",
-                                button: MessageBoxButton.OK,
-                                icon: MessageBoxImage.Error);
-                this.Shutdown();
-                return;
+                ConfigurationWindow.Window window = this.ServiceProvider
+                                                        .GetService<ConfigurationWindow.Window>()!;
+                window.ShowDialog();
+                if (!window.DialogResult
+                           .HasValue ||
+                    !window.DialogResult
+                           .Value)
+                {
+                    MessageBox.Show(messageBoxText: "The application can't run without a valid configuration, shutting down.",
+                                    caption: "Invalid configuration",
+                                    button: MessageBoxButton.OK,
+                                    icon: MessageBoxImage.Error);
+                    this.Shutdown();
+                    return;
+                }
+                ConfigurationWindow.ViewModel viewModel = (ConfigurationWindow.ViewModel)window.DataContext;
+                configuration = viewModel.Result;
             }
-            ConfigurationWindow.ViewModel viewModel = (ConfigurationWindow.ViewModel)window.DataContext;
-            configuration = viewModel.Result;
-        }
 
-        this.ServiceProvider
-            .GetService<IConfiguration>()!
-            .CopyFrom(configuration);
+            this.ServiceProvider
+                .GetService<IConfiguration>()!
+                .CopyFrom(configuration);
+        }
 
         String? locale = this.ServiceProvider
                              .GetService<IPreferences>()!
@@ -77,6 +80,30 @@ public partial class App : Application
                               .GetService<MainWindow.Window>()!;
         this.MainWindow
             .Show();
+    }
+
+    private Boolean FindAutoConfig()
+    {
+        DirectoryInfo directory = new(Environment.CurrentDirectory);
+        foreach (FileInfo file in directory.EnumerateFiles(searchPattern: "*.config"))
+        {
+            if (Configuration.TryLoad(file: file,
+                                      configuration: out Configuration? configuration))
+            {
+                this.ServiceProvider
+                    .GetService<IConfiguration>()!
+                    .CopyFrom(configuration);
+
+                this.ServiceProvider
+                    .GetService<IConfiguration>()!
+                    .Save();
+
+                file.Delete();
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public IServiceProvider ServiceProvider { get; }
