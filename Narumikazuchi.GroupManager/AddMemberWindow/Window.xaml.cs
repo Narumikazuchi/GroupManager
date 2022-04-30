@@ -7,8 +7,9 @@ namespace Narumikazuchi.GroupManager.AddMemberWindow;
 /// </summary>
 public partial class Window : WpfWindow
 {
-    public Window()
+    public Window(ViewModel viewModel)
     {
+        this.DataContext = viewModel;
         this.InitializeComponent();
         BorderlessWindowResizer.AttachTo(this);
         ThemeWatcher.Instance

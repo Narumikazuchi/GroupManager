@@ -2,15 +2,19 @@
 
 public sealed partial class ViewModel
 {
-    public ViewModel()
+    public ViewModel(IConfiguration configuration,
+                     IActiveDirectoryService activeDirectory,
+                     ILocalizationService localization)
     {
-        m_SaveConfigurationCommand = new(this.SaveConfiguration);
-    }
+        m_ApplicationConfiguration = configuration;
+        m_ActiveDirectoryService = activeDirectory;
+        m_LocalizationService = localization;
 
-    public Int32 SelectedIndex
-    {
-        get;
-        set;
+        m_SaveConfigurationCommand = new(this.SaveConfiguration);
+        m_DefaultLocaleChangedCommand = new(this.DefaultLocaleChanged);
+
+        m_LocalizationService.LocaleChanged += this.UpdateLocalization;
+        m_LocalizationService.LocaleListChanged += this.UpdateLocaleList;
     }
 
     public String PrincipalDnLabel
@@ -19,9 +23,12 @@ public sealed partial class ViewModel
         {
             if (this.UseGroupForPrincipals)
             {
-                return Localization.Instance.PrincipalGroupDn;
+                return m_LocalizationService.LocalizationDictionary["PrincipalGroupDn"];
             }
-            return Localization.Instance.PrincipalOuDn;
+            else
+            {
+                return m_LocalizationService.LocalizationDictionary["PrincipalOuDn"];
+            }
         }
     }
 
@@ -34,9 +41,12 @@ public sealed partial class ViewModel
             {
                 return;
             }
-            m_UseGroupForPrincipals = value;
-            this.OnPropertyChanged(nameof(this.UseGroupForPrincipals));
-            this.OnPropertyChanged(nameof(this.PrincipalDnLabel));
+            else
+            {
+                m_UseGroupForPrincipals = value;
+                this.OnPropertyChanged(nameof(this.UseGroupForPrincipals));
+                this.OnPropertyChanged(nameof(this.PrincipalDnLabel));
+            }
         }
     }
 
@@ -56,9 +66,12 @@ public sealed partial class ViewModel
         {
             if (this.UseGroupForGroups)
             {
-                return Localization.Instance.GroupsGroupDn;
+                return m_LocalizationService.LocalizationDictionary["GroupsGroupDn"];
             }
-            return Localization.Instance.GroupOuDn;
+            else
+            {
+                return m_LocalizationService.LocalizationDictionary["GroupOuDn"];
+            }
         }
     }
 
@@ -71,9 +84,12 @@ public sealed partial class ViewModel
             {
                 return;
             }
-            m_UseGroupForGroups = value;
-            this.OnPropertyChanged(nameof(this.UseGroupForGroups));
-            this.OnPropertyChanged(nameof(this.GroupDnLabel));
+            else
+            {
+                m_UseGroupForGroups = value;
+                this.OnPropertyChanged(nameof(this.UseGroupForGroups));
+                this.OnPropertyChanged(nameof(this.GroupDnLabel));
+            }
         }
     }
 
@@ -107,12 +123,53 @@ public sealed partial class ViewModel
         }
     }
 
+    public Configuration Result
+    {
+        get;
+        set;
+    } = new();
+
     public ICommand SaveConfigurationCommand =>
         m_SaveConfigurationCommand;
+
+    public ICommand DefaultLocaleChangedCommand =>
+        m_DefaultLocaleChangedCommand;
+
+    public String Title =>
+        m_LocalizationService.LocalizationDictionary["Configuration"];
+
+    public String DefaultLocaleLabel =>
+        m_LocalizationService.LocalizationDictionary["DefaultLocale"];
+
+    public String UseGroupLabel =>
+        m_LocalizationService.LocalizationDictionary["UseGroup"];
+
+    public String SaveLabel =>
+        m_LocalizationService.LocalizationDictionary["Save"];
+
+    public String CancelLabel =>
+        m_LocalizationService.LocalizationDictionary["Cancel"];
+
+    public IEnumerable<String> AvailableLanguages =>
+        m_LocalizationService.AvailableLocales;
 }
 
 partial class ViewModel : WindowViewModel
 {
+    private void UpdateLocalization()
+    {
+        this.OnPropertyChanged(nameof(this.PrincipalDnLabel));
+        this.OnPropertyChanged(nameof(this.GroupDnLabel));
+        this.OnPropertyChanged(nameof(this.Title));
+        this.OnPropertyChanged(nameof(this.DefaultLocaleLabel));
+        this.OnPropertyChanged(nameof(this.UseGroupLabel));
+        this.OnPropertyChanged(nameof(this.SaveLabel));
+        this.OnPropertyChanged(nameof(this.CancelLabel));
+    }
+
+    private void UpdateLocaleList() =>
+        this.OnPropertyChanged(nameof(this.AvailableLanguages));
+
     private void SaveConfiguration(Window window)
     {
         this.ProgressVisibility = Visibility.Visible;
@@ -121,15 +178,14 @@ partial class ViewModel : WindowViewModel
 
     private async Task SaveConfigurationAsync(Window window)
     {
-        Boolean success = await CanGetPrincipalAsync(this.PrincipalDn);
+        Boolean success = await this.CanGetPrincipalAsync(this.PrincipalDn);
         if (!success)
         {
             window.Dispatcher
                   .Invoke(() =>
             {
                 MessageBox.Show(owner: window,
-                                messageBoxText: String.Format(format: Localization.Instance
-                                                                                  .FailedToFindAdsObject,
+                                messageBoxText: String.Format(format: m_LocalizationService.LocalizationDictionary["FailedToFindAdsObject"],
                                                               arg0: this.PrincipalDn),
                                 caption: "Failed to find adsObject",
                                 button: MessageBoxButton.OK,
@@ -139,15 +195,14 @@ partial class ViewModel : WindowViewModel
             return;
         }
 
-        success = await CanGetPrincipalAsync(this.GroupDn);
+        success = await this.CanGetPrincipalAsync(this.GroupDn);
         if (!success)
         {
             window.Dispatcher
                   .Invoke(() =>
             {
                 MessageBox.Show(owner: window,
-                                messageBoxText: String.Format(format: Localization.Instance
-                                                                                  .FailedToFindAdsObject,
+                                messageBoxText: String.Format(format: m_LocalizationService.LocalizationDictionary["FailedToFindAdsObject"],
                                                               arg0: this.GroupDn),
                                 caption: "Failed to find adsObject",
                                 button: MessageBoxButton.OK,
@@ -157,16 +212,13 @@ partial class ViewModel : WindowViewModel
             return;
         }
 
-        Configuration configuration = new()
-        {
-            DefaultLocale = Localization.AvailableLanguages[this.SelectedIndex],
-            UseGroupsForPrincipals = this.UseGroupForPrincipals,
-            PrincipalsDn = this.PrincipalDn,
-            UseGroupsForGroups = this.UseGroupForGroups,
-            ManagedGroupsDn = this.GroupDn
-        };
-        Configuration.Current = configuration;
-        configuration.Save();
+        //m_ApplicationConfiguration.DefaultLocale = Localization.AvailableLanguages[this.SelectedIndex];
+        //m_ApplicationConfiguration.UseGroupsForPrincipals = this.UseGroupForPrincipals;
+        //m_ApplicationConfiguration.PrincipalsDn = this.PrincipalDn;
+        //m_ApplicationConfiguration.UseGroupsForGroups = this.UseGroupForGroups;
+        //m_ApplicationConfiguration.ManagedGroupsDn = this.GroupDn;
+        m_ApplicationConfiguration.CopyFrom(this.Result);
+        m_ApplicationConfiguration.Save();
         window.Dispatcher
               .Invoke(() =>
         {
@@ -175,10 +227,10 @@ partial class ViewModel : WindowViewModel
         });
     }
 
-    private static async Task<Boolean> CanGetPrincipalAsync(String dn) => 
+    private async Task<Boolean> CanGetPrincipalAsync(String dn) => 
         await Task.Run(() =>
         {
-            if (!ActiveDirectoryInterface.TryGetPrincipalByDN(dn: dn,
+            if (!m_ActiveDirectoryService.TryGetPrincipalByDN(distinguishedName: dn,
                                                               principal: out _))
             {
                 return false;
@@ -186,7 +238,16 @@ partial class ViewModel : WindowViewModel
             return true;
         });
 
+    private void DefaultLocaleChanged(ComboBox comboBox)
+    {
+
+    }
+
+    private readonly IConfiguration m_ApplicationConfiguration;
+    private readonly IActiveDirectoryService m_ActiveDirectoryService;
+    private readonly ILocalizationService m_LocalizationService;
     private readonly RelayCommand<Window> m_SaveConfigurationCommand;
+    private readonly RelayCommand<ComboBox> m_DefaultLocaleChangedCommand;
     private Boolean m_UseGroupForPrincipals = false;
     private String m_PrincipalDn = String.Empty;
     private Boolean m_UseGroupForGroups = false;

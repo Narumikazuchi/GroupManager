@@ -1,4 +1,5 @@
-﻿global using Microsoft.Win32;
+﻿global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Win32;
 global using Narumikazuchi.Windows.Wpf;
 global using System.Collections.ObjectModel;
 global using System.ComponentModel;

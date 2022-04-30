@@ -7,8 +7,7 @@
         xmlns:ns="clr-namespace:Narumikazuchi.GroupManager"
         xmlns:local="clr-namespace:Narumikazuchi.GroupManager.ConfigurationWindow"
         mc:Ignorable="d"
-        Title="{Binding Source={x:Static ns:Localization.Instance}, Path=Configuration}"
-        DataContext="{DynamicResource ViewModel}"
+        Title="{Binding Title}"
         Background="{DynamicResource Background}"
         Foreground="{DynamicResource Primary}"
         Icon="pack://application:,,,/Narumikazuchi.GroupManager;component/Resources/Group1.png"
@@ -16,9 +15,6 @@
         Height="320"
         Width="386"
         ResizeMode="NoResize">
-    <Window.Resources>
-        <local:ViewModel x:Key="ViewModel"/>
-    </Window.Resources>
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="{Binding Source={x:Static SystemParameters.CaptionHeight}}"
                       ResizeBorderThickness="8"/>
@@ -103,19 +99,20 @@
                            Margin="8 4"
                            VerticalAlignment="Center"
                            TextWrapping="WrapWithOverflow"
-                           Text="{Binding Source={x:Static ns:Localization.Instance}, Path=DefaultLocale}"/>
+                           Text="{Binding DefaultLocaleLabel}"/>
 
                 <ComboBox Grid.Row="1"
                           Grid.ColumnSpan="2"
                           Margin="8 4"
                           MaxHeight="20"
                           VerticalAlignment="Center"
-                          SelectedIndex="{Binding SelectedIndex}"
-                          ItemsSource="{Binding Source={x:Static ns:Localization.AvailableLanguages}}"
+                          SelectedItem="{Binding Result.DefaultLocale}"
+                          ItemsSource="{Binding AvailableLanguages}"
                           ItemContainerStyle="{DynamicResource ComboBoxItem}"
-                          Style="{DynamicResource ComboBox}"/>
+                          Style="{DynamicResource ComboBox}">
+                </ComboBox>
 
-                <TextBlock Grid.Row="2"
+                    <TextBlock Grid.Row="2"
                            Grid.ColumnSpan="2"
                            Margin="8 4"
                            VerticalAlignment="Center"
@@ -128,9 +125,9 @@
                           VerticalAlignment="Top"
                           Style="{DynamicResource CheckBox}">
                     <CheckBox.Content>
-                        <TextBlock Text="{Binding Source={x:Static ns:Localization.Instance}, Path=UseGroup}"/>
+                        <TextBlock Text="{Binding UseGroupLabel}"/>
                     </CheckBox.Content>
-                    <i:Interaction.Triggers>
+                    <!--<i:Interaction.Triggers>
                         <i:EventTrigger EventName="Checked">
                             <i:ChangePropertyAction PropertyName="UseGroupForPrincipals"
                                                     TargetObject="{DynamicResource ViewModel}"
@@ -141,7 +138,7 @@
                                                     TargetObject="{DynamicResource ViewModel}"
                                                     Value="False"/>
                         </i:EventTrigger>
-                    </i:Interaction.Triggers>
+                    </i:Interaction.Triggers>-->
                 </CheckBox>
 
                 <TextBox Grid.Row="4"
@@ -165,9 +162,9 @@
                           VerticalAlignment="Top"
                           Style="{DynamicResource CheckBox}">
                     <CheckBox.Content>
-                        <TextBlock Text="{Binding Source={x:Static ns:Localization.Instance}, Path=UseGroup}"/>
+                        <TextBlock Text="{Binding UseGroupLabel}"/>
                     </CheckBox.Content>
-                    <i:Interaction.Triggers>
+                    <!--<i:Interaction.Triggers>
                         <i:EventTrigger EventName="Checked">
                             <i:ChangePropertyAction PropertyName="UseGroupForGroups"
                                                     TargetObject="{DynamicResource ViewModel}"
@@ -178,7 +175,7 @@
                                                     TargetObject="{DynamicResource ViewModel}"
                                                     Value="False"/>
                         </i:EventTrigger>
-                    </i:Interaction.Triggers>
+                    </i:Interaction.Triggers>-->
                 </CheckBox>
 
                 <TextBox Grid.Row="7"
@@ -194,7 +191,7 @@
                         Margin="4"
                         VerticalAlignment="Center"
                         HorizontalAlignment="Right"
-                        Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Save}"
+                        Content="{Binding SaveLabel}"
                         Style="{DynamicResource Button}"
                         Command="{Binding SaveConfigurationCommand}"
                         CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>
@@ -204,7 +201,7 @@
                         Margin="4"
                         VerticalAlignment="Center"
                         HorizontalAlignment="Left"
-                        Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Cancel}"
+                        Content="{Binding CancelLabel}"
                         Style="{DynamicResource Button}"
                         Command="{Binding CloseWindowCommand}"
                         CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type local:Window}}}"/>

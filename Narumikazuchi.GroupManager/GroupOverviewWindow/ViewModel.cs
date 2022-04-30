@@ -2,7 +2,11 @@
 
 public sealed partial class ViewModel
 {
-    public ViewModel()
+    public ViewModel(IActiveDirectoryService activeDirectoryService,
+                     ILocalizationService localizationService,
+                     IPreferences preferences,
+                     AddMemberWindow.ViewModel addViewModel,
+                     AddMemberWindow.Window addWindow)
     {
         m_WindowLoadedCommand = new(this.WindowLoaded);
         m_WindowClosingCommand = new(this.WindowClosing);
@@ -13,47 +17,61 @@ public sealed partial class ViewModel
                                     canExecute: this.CanRemoveMember);
         m_WindowResizedCommand = new(this.WindowResized);
 
-        this.Title = Localization.Instance.Unknown;
-        this.GroupName = Localization.Instance.Unknown;
-        this.StatusText = Localization.Instance.StatusLoading;
+        m_ActiveDirectoryService = activeDirectoryService;
+        m_LocalizationService = localizationService;
+        m_Preferences = preferences;
+        m_AddViewModel = addViewModel;
+        m_AddWindow = addWindow;
+
+        this.Title = localizationService.LocalizationDictionary["Unknown"];
+        this.GroupName = localizationService.LocalizationDictionary["Unknown"];
+        this.StatusText = "StatusLoading";
+
+        m_LocalizationService.LocaleChanged += this.UpdateLocalization;
+        m_LocalizationService.LocaleListChanged += this.UpdateLocaleList;
     }
 
-    public void Load(GroupListItemViewModel group!!)
+    public void Load(GroupListItemViewModel group)
     {
-        this.Title = group.DisplayName ?? Localization.Instance.Unknown;
-        this.GroupName = group.DisplayName ?? Localization.Instance.Unknown;
+        ArgumentNullException.ThrowIfNull(group);
+
+        this.Title = group.DisplayName ?? m_LocalizationService.LocalizationDictionary["Unknown"];
+        this.GroupName = group.DisplayName ?? m_LocalizationService.LocalizationDictionary["Unknown"];
         m_Principal = group.AdsObject;
     }
 
+    public Rect Rect =>
+        m_Preferences.GroupOverviewWindowSize;
+
     public String Title
     {
-        get => m_Title;
+        get => String.Format(format: m_LocalizationService.LocalizationDictionary["MembersOf"],
+                             arg0: m_Title);
         set
         {
-            m_Title = String.Format(format: Localization.Instance.MembersOf,
-                                    arg0: value);
+            m_Title = value;
             this.OnPropertyChanged(nameof(this.Title));
         }
     }
 
     public String GroupName
     {
-        get => m_GroupName;
+        get => String.Format(format: m_LocalizationService.LocalizationDictionary["Group"],
+                             arg0: m_GroupName);
         set
         {
-            m_GroupName = String.Format(format: Localization.Instance.Group,
-                                        arg0: value);
+            m_GroupName = value;
             this.OnPropertyChanged(nameof(this.GroupName));
         }
     }
 
     public String StatusText
     {
-        get => m_StatusText;
+        get => String.Format(format: m_LocalizationService.LocalizationDictionary["Status"],
+                             arg0: m_LocalizationService.LocalizationDictionary[m_StatusText]);
         set
         {
-            m_StatusText = String.Format(format: Localization.Instance.Status,
-                                         arg0: value);
+            m_StatusText = value;
             this.OnPropertyChanged(nameof(this.StatusText));
         }
     }
@@ -90,10 +108,50 @@ public sealed partial class ViewModel
 
     public ICommand WindowResizedCommand =>
         m_WindowResizedCommand;
+
+    public String AddLabel =>
+        m_LocalizationService.LocalizationDictionary["Add"];
+
+    public String RemoveLabel =>
+        m_LocalizationService.LocalizationDictionary["Remove"];
+
+    public String ReloadListLabel =>
+        m_LocalizationService.LocalizationDictionary["ReloadList"];
+
+    public String CancelLabel =>
+        m_LocalizationService.LocalizationDictionary["Cancel"];
+
+    public String CloseLabel =>
+        m_LocalizationService.LocalizationDictionary["Close"];
+
+    public IEnumerable<String> AvailableLanguages =>
+        m_LocalizationService.AvailableLocales;
+
+    public String SelectedLocale
+    {
+        get => m_LocalizationService.SelectedLocale;
+        set => m_LocalizationService.SelectedLocale = value;
+    }
 }
 
 partial class ViewModel : WindowViewModel
 {
+    private void UpdateLocalization()
+    {
+        this.OnPropertyChanged(nameof(this.SelectedLocale));
+        this.OnPropertyChanged(nameof(this.Title));
+        this.OnPropertyChanged(nameof(this.GroupName));
+        this.OnPropertyChanged(nameof(this.StatusText));
+        this.OnPropertyChanged(nameof(this.AddLabel));
+        this.OnPropertyChanged(nameof(this.RemoveLabel));
+        this.OnPropertyChanged(nameof(this.ReloadListLabel));
+        this.OnPropertyChanged(nameof(this.CancelLabel));
+        this.OnPropertyChanged(nameof(this.CloseLabel));
+    }
+
+    private void UpdateLocaleList() =>
+        this.OnPropertyChanged(nameof(this.AvailableLanguages));
+
     private void WindowLoaded(Window window)
     {
         if (window.Top + window.Height / 2 > SystemParameters.VirtualScreenHeight)
@@ -119,13 +177,12 @@ partial class ViewModel : WindowViewModel
 
     private void WindowClosing(Window window)
     {
-        Preferences preferences = Preferences.Current;
         Rect size = new(x: window.Left,
                         y: window.Top,
                         width: window.Width,
                         height: window.Height);
-        preferences.GroupOverviewWindowSize = size;
-        preferences.Save();
+        m_Preferences.GroupOverviewWindowSize = size;
+        m_Preferences.Save();
 
         Application.Current
                    .Dispatcher
@@ -140,37 +197,35 @@ partial class ViewModel : WindowViewModel
 
     private void AddMember()
     {
-        AddMemberWindow.Window window = new();
-        AddMemberWindow.ViewModel viewModel = (AddMemberWindow.ViewModel)window.DataContext;
-        Boolean? result = window.ShowDialog();
+        Boolean? result = m_AddWindow.ShowDialog();
 
         if (!result.HasValue ||
             !result.Value ||
-            viewModel.Principal is null)
+            m_AddViewModel.Principal is null)
         {
             return;
         }
 
-        if (viewModel.Principal
-                     .IsUser())
+        if (m_AddViewModel.Principal
+                          .IsUser(m_ActiveDirectoryService))
         {
             this.Members
-                .Add(new UserListItemViewModel(viewModel.Principal));
+                .Add(new UserListItemViewModel(m_AddViewModel.Principal));
         }
-        else if (viewModel.Principal
-                          .IsGroup())
+        else if (m_AddViewModel.Principal
+                               .IsGroup(m_ActiveDirectoryService))
         {
             this.Members
-                .Add(new GroupListItemViewModel(viewModel.Principal));
+                .Add(new GroupListItemViewModel(m_AddViewModel.Principal));
         }
 
-        String dn = viewModel.Principal
-                             .Path
-                             .Remove(0, 7);
-        if (!ActiveDirectoryInterface.TryAddPrincipalToGroup(group: m_Principal!,
-                                                             objectDn: dn))
+        String dn = m_AddViewModel.Principal
+                                  .Path
+                                  .Remove(0, 7);
+        if (!m_ActiveDirectoryService.TryAddPrincipalToGroup(group: m_Principal!,
+                                                             distinguishedName: dn))
         {
-            MessageBox.Show(messageBoxText: String.Format(format: Localization.Instance.FailedToAdd,
+            MessageBox.Show(messageBoxText: String.Format(format: m_LocalizationService.LocalizationDictionary["FailedToAdd"],
                                                           arg0: dn),
                             caption: "COM Exception",
                             button: MessageBoxButton.OK,
@@ -195,10 +250,10 @@ partial class ViewModel : WindowViewModel
                          .Remove(0, 7);
         this.Members
             .Remove(model);
-        if (!ActiveDirectoryInterface.TryRemovePrincipalFromGroup(group: m_Principal!,
-                                                               objectDn: dn))
+        if (!m_ActiveDirectoryService.TryRemovePrincipalFromGroup(group: m_Principal!,
+                                                                  distinguishedName: dn))
         {
-            MessageBox.Show(messageBoxText: String.Format(format: Localization.Instance.FailedToRemove,
+            MessageBox.Show(messageBoxText: String.Format(format: m_LocalizationService.LocalizationDictionary["FailedToRemove"],
                                                           arg0: dn),
                             caption: "COM Exception",
                             button: MessageBoxButton.OK,
@@ -216,7 +271,7 @@ partial class ViewModel : WindowViewModel
         }
 
         this.ProgressVisibility = Visibility.Visible;
-        this.StatusText = Localization.Instance.StatusLoading;
+        this.StatusText = "StatusLoading";
 
         m_TokenSource = new();
 
@@ -230,7 +285,7 @@ partial class ViewModel : WindowViewModel
         {
             return;
         }
-        IReadOnlyList<String> memberDns = ActiveDirectoryInterface.CastPropertyToStringArray(adsObject: m_Principal!,
+        IReadOnlyList<String> memberDns = m_ActiveDirectoryService.CastPropertyToStringArray(adsObject: m_Principal!,
                                                                                              property: "member");
         foreach (String dn in memberDns)
         {
@@ -245,14 +300,14 @@ partial class ViewModel : WindowViewModel
             }
 
             DirectoryEntry principal = new($"LDAP://{dn}");
-            if (principal.IsUser())
+            if (principal.IsUser(m_ActiveDirectoryService))
             {
                 Application.Current
                            .Dispatcher
                            .Invoke(() => this.Members
                                              .Add(new UserListItemViewModel(principal)));
             }
-            else if (principal.IsGroup())
+            else if (principal.IsGroup(m_ActiveDirectoryService))
             {
                 Application.Current
                            .Dispatcher
@@ -283,7 +338,7 @@ partial class ViewModel : WindowViewModel
     private void FinishTask(Task _)
     {
         this.ProgressVisibility = Visibility.Collapsed;
-        this.StatusText = Localization.Instance.StatusDone;
+        this.StatusText = "StatusDone";
         if (m_TokenSource is not null)
         {
             m_TokenSource.Dispose();
@@ -293,17 +348,21 @@ partial class ViewModel : WindowViewModel
 
     private void WindowResized(Window window)
     {
-        Preferences preferences = Preferences.Current;
-        preferences.GroupOverviewWindowSize = new()
+        m_Preferences.GroupOverviewWindowSize = new()
         {
             X = window.Left,
             Y = window.Top,
             Width = window.Width,
             Height = window.Height
         };
-        preferences.Save();
+        m_Preferences.Save();
     }
 
+    private readonly IActiveDirectoryService m_ActiveDirectoryService;
+    private readonly ILocalizationService m_LocalizationService;
+    private readonly IPreferences m_Preferences;
+    private readonly AddMemberWindow.ViewModel m_AddViewModel;
+    private readonly AddMemberWindow.Window m_AddWindow;
     private readonly RelayCommand<Window> m_WindowLoadedCommand;
     private readonly RelayCommand<Window> m_WindowClosingCommand;
     private readonly RelayCommand m_ReloadListCommand;

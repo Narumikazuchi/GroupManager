@@ -7,21 +7,17 @@
         xmlns:ns="clr-namespace:Narumikazuchi.GroupManager"
         xmlns:local="clr-namespace:Narumikazuchi.GroupManager.AddMemberWindow"
         mc:Ignorable="d"
-        Title="{Binding Source={x:Static ns:Localization.Instance}, Path=Add}"
-        DataContext="{DynamicResource ViewModel}"
+        Title="{Binding AddLabel}"
         Background="{DynamicResource Background}"
         Foreground="{DynamicResource Primary}"
         Icon="pack://application:,,,/Narumikazuchi.GroupManager;component/Resources/User1.png"
         WindowStyle="None"
         MinHeight="386" 
         MinWidth="386"
-        Left="{Binding Source={x:Static ns:Preferences.Current}, Path=AddUserWindowSize.X}"
-        Top="{Binding Source={x:Static ns:Preferences.Current}, Path=AddUserWindowSize.Y}"
-        Width="{Binding Source={x:Static ns:Preferences.Current}, Path=AddUserWindowSize.Width}"
-        Height="{Binding Source={x:Static ns:Preferences.Current}, Path=AddUserWindowSize.Height}">
-    <Window.Resources>
-        <local:ViewModel x:Key="ViewModel"/>
-    </Window.Resources>
+        Left="{Binding Rect.X}"
+        Top="{Binding Rect.Y}"
+        Width="{Binding Rect.Width}"
+        Height="{Binding Rect.Height}">
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="{Binding Source={x:Static SystemParameters.CaptionHeight}}"
                       ResizeBorderThickness="8"/>
@@ -65,8 +61,8 @@
 
                 <ComboBox Grid.Column="2"
                           VerticalAlignment="Center"
-                          SelectedIndex="{Binding Source={x:Static ns:Localization.Instance}, Path=SelectedLocaleIndex, Mode=TwoWay}"
-                          ItemsSource="{Binding Source={x:Static ns:Localization.AvailableLanguages}}"
+                          ItemsSource="{Binding AvailableLanguages}"
+                          SelectedItem="{Binding SelectedLocale}"
                           ItemContainerStyle="{DynamicResource ComboBoxItem}"
                           Style="{DynamicResource WindowComboBox}"/>
 
@@ -102,7 +98,7 @@
 
                 <TextBlock Grid.Row="0"
                            Margin="8"
-                           Text="{Binding Source={x:Static ns:Localization.Instance}, Path=FilterLabel}"
+                           Text="{Binding FilterLabel}"
                            HorizontalAlignment="Left"
                            VerticalAlignment="Center"/>
                 <TextBox Grid.Row="0"
@@ -126,7 +122,7 @@
 
                     <TextBlock Grid.Row="0"
                                Margin="8"
-                               Text="{Binding Source={x:Static ns:Localization.Instance}, Path=ResultsLabel}"/>
+                               Text="{Binding ResultsLabel}"/>
 
                     <Grid Grid.Row="1"
                           Panel.ZIndex="1"
@@ -141,7 +137,7 @@
                         <ns:CyclingProgress Grid.Row="0"/>
                         <Button Grid.Row="1"
                                 Margin="8"
-                                Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Cancel}"
+                                Content="{Binding CancelLabel}"
                                 Style="{DynamicResource Button}"
                                 Command="{Binding CancelOperationCommand}"/>
                     </Grid>
@@ -165,7 +161,7 @@
                 </Grid>
 
                 <Button Grid.Row="2"
-                        Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Add}"
+                        Content="{Binding AddLabel}"
                         Margin="8 8 104 8"
                         HorizontalAlignment="Right"
                         MinWidth="88"
@@ -173,7 +169,7 @@
                         Command="{Binding AddObjectCommand}"
                         CommandParameter="{Binding ElementName=m_Results}"/>
                 <Button Grid.Row="2"
-                        Content="{Binding Source={x:Static ns:Localization.Instance}, Path=Cancel}"
+                        Content="{Binding CancelLabel}"
                         Margin="8"
                         HorizontalAlignment="Right"
                         MinWidth="88"

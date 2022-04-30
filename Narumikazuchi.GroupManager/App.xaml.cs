@@ -5,6 +5,32 @@
 /// </summary>
 public partial class App : Application
 {
+    public App()
+    {
+        IServiceCollection services = new ServiceCollection();
+
+        if (!Preferences.TryLoad(out Preferences? preferences))
+        {
+            preferences = new();
+        }
+
+        services.AddSingleton<ILogger, TextLogger>()
+                .AddSingleton<IConfiguration, Configuration>()
+                .AddSingleton<IPreferences>(preferences!)
+                .AddSingleton<IActiveDirectoryService, ActiveDirectoryService>()
+                .AddSingleton<ILocalizationService, LocalizationService>()
+                .AddSingleton<ConfigurationWindow.ViewModel>()
+                .AddSingleton<ConfigurationWindow.Window>()
+                .AddSingleton<AddMemberWindow.ViewModel>()
+                .AddSingleton<AddMemberWindow.Window>()
+                .AddSingleton<GroupOverviewWindow.ViewModel>()
+                .AddSingleton<GroupOverviewWindow.Window>()
+                .AddSingleton<MainWindow.ViewModel>()
+                .AddSingleton<MainWindow.Window>();
+
+        this.ServiceProvider = services.BuildServiceProvider();
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -12,9 +38,11 @@ public partial class App : Application
         ThemeWatcher.Instance
                     .StartThemeWatching();
 
-        if (!Configuration.TryLoad())
+        if (!Configuration.TryLoad(file: Configuration.DefaultLocation,
+                                   configuration: out Configuration? configuration))
         {
-            ConfigurationWindow.Window window = new();
+            ConfigurationWindow.Window window = this.ServiceProvider
+                                                    .GetService<ConfigurationWindow.Window>()!;
             window.ShowDialog();
             if (!window.DialogResult
                        .HasValue ||
@@ -28,40 +56,28 @@ public partial class App : Application
                 this.Shutdown();
                 return;
             }
-        }
-        if (!Preferences.TryLoad())
-        {
-            Preferences.Current
-                       .Save();
+            ConfigurationWindow.ViewModel viewModel = (ConfigurationWindow.ViewModel)window.DataContext;
+            configuration = viewModel.Result;
         }
 
-        if (Preferences.Current
-                       .Locale is null)
-        {
-            Localization.Instance
-                        .Locale = Configuration.Current
-                                               .DefaultLocale;
-        }
-        else
-        {
-            Localization.Instance
-                        .Locale = Preferences.Current
-                                             .Locale;
-        }
+        this.ServiceProvider
+            .GetService<IConfiguration>()!
+            .CopyFrom(configuration);
 
-        if (Localization.Instance
-                        .Locale != "en" &&
-            !Localization.TryLoad())
-        {
-            MessageBox.Show(messageBoxText: "The localization file couldn't be found. The language default (english) will be displayed.",
-                            caption: "File not found",
-                            button: MessageBoxButton.OK,
-                            icon: MessageBoxImage.Asterisk);
-        }
+        String? locale = this.ServiceProvider
+                             .GetService<IPreferences>()!
+                             .Locale;
+
+        this.ServiceProvider
+            .GetService<ILocalizationService>()!
+            .ChangeLocale(locale);
 
         this.ShutdownMode = ShutdownMode.OnMainWindowClose;
-        this.MainWindow = new MainWindow.Window();
+        this.MainWindow = this.ServiceProvider
+                              .GetService<MainWindow.Window>()!;
         this.MainWindow
             .Show();
     }
+
+    public IServiceProvider ServiceProvider { get; }
 }

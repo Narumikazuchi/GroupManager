@@ -110,7 +110,8 @@ partial class ThemeWatcher
                                      uriKind: UriKind.Relative);
     }
 
-    private void SystemParameters_PropertyChanged(Object? sender, PropertyChangedEventArgs e)
+    private void SystemParameters_PropertyChanged(Object? sender,
+                                                  PropertyChangedEventArgs e)
     {
         m_WindowsTheme = GetWindowsTheme();
 
@@ -121,7 +122,8 @@ partial class ThemeWatcher
                     eventArgs: new(m_WindowsTheme));
     }
 
-    private void Watcher_EventArrived(Object sender, EventArrivedEventArgs e)
+    private void Watcher_EventArrived(Object sender,
+                                      EventArrivedEventArgs e)
     {
         m_WindowsTheme = GetWindowsTheme();
 

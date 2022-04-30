@@ -4,6 +4,5 @@ public enum WindowsTheme
 {
     Default,
     Light,
-    Dark,
-    HighContrast
+    Dark
 }

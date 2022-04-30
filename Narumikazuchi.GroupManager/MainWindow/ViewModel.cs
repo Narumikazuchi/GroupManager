@@ -2,7 +2,12 @@
 
 public sealed partial class ViewModel
 {
-    public ViewModel()
+    public ViewModel(IActiveDirectoryService activeDirectoryService,
+                     IConfiguration configuration,
+                     ILocalizationService localizationService,
+                     IPreferences preferences,
+                     GroupOverviewWindow.ViewModel groupViewModel,
+                     GroupOverviewWindow.Window groupWindow)
     {
         m_WindowLoadedCommand = new(this.WindowLoaded);
         m_WindowClosingCommand = new(this.WindowClosing);
@@ -12,7 +17,17 @@ public sealed partial class ViewModel
                                         canExecute: this.CanOpenSelectedItem);
         m_WindowResizedCommand = new(this.WindowResized);
 
-        this.Manager = Localization.Instance.Unknown;
+        m_ActiveDirectoryService = activeDirectoryService;
+        m_Configuration = configuration;
+        m_LocalizationService = localizationService;
+        m_Preferences = preferences;
+        m_GroupViewModel = groupViewModel;
+        m_GroupWindow = groupWindow;
+
+        this.Manager = m_LocalizationService.LocalizationDictionary["Unknown"];
+
+        m_LocalizationService.LocaleChanged += this.UpdateLocalization;
+        m_LocalizationService.LocaleListChanged += this.UpdateLocaleList;
     }
 
     public void OpenItem(Object sender,
@@ -25,13 +40,16 @@ public sealed partial class ViewModel
         this.OpenSelectedItem(view);
     }
 
+    public Rect Rect =>
+        m_Preferences.MainWindowSize;
+
     public String Manager
     {
-        get => m_Manager;
+        get => String.Format(format: m_LocalizationService.LocalizationDictionary["Manager"],
+                             arg0: m_Manager);
         set
         {
-            m_Manager = String.Format(format: Localization.Instance.Manager,
-                                      arg0: value);
+            m_Manager = value;
             this.OnPropertyChanged(nameof(this.Manager));
         }
     }
@@ -65,10 +83,48 @@ public sealed partial class ViewModel
 
     public ICommand WindowResizedCommand =>
         m_WindowResizedCommand;
+
+    public String Title =>
+        m_LocalizationService.LocalizationDictionary["MainTitle"];
+
+    public String ReloadListLabel =>
+        m_LocalizationService.LocalizationDictionary["ReloadList"];
+
+    public String ShowMembersLabel =>
+        m_LocalizationService.LocalizationDictionary["ShowMembers"];
+
+    public String CancelLabel =>
+        m_LocalizationService.LocalizationDictionary["Cancel"];
+
+    public String CloseLabel =>
+        m_LocalizationService.LocalizationDictionary["Close"];
+
+    public IEnumerable<String> AvailableLanguages =>
+        m_LocalizationService.AvailableLocales;
+
+    public String SelectedLocale
+    {
+        get => m_LocalizationService.SelectedLocale;
+        set => m_LocalizationService.SelectedLocale = value;
+    }
 }
 
 partial class ViewModel : WindowViewModel
 {
+    private void UpdateLocalization()
+    {
+        this.OnPropertyChanged(nameof(this.SelectedLocale));
+        this.OnPropertyChanged(nameof(this.Manager));
+        this.OnPropertyChanged(nameof(this.Title));
+        this.OnPropertyChanged(nameof(this.ReloadListLabel));
+        this.OnPropertyChanged(nameof(this.ShowMembersLabel));
+        this.OnPropertyChanged(nameof(this.CancelLabel));
+        this.OnPropertyChanged(nameof(this.CloseLabel));
+    }
+
+    private void UpdateLocaleList() =>
+        this.OnPropertyChanged(nameof(this.AvailableLanguages));
+
     private void WindowLoaded(Window window)
     {
         if (window.Top + window.Height / 2 > SystemParameters.VirtualScreenHeight)
@@ -94,13 +150,12 @@ partial class ViewModel : WindowViewModel
 
     private void WindowClosing(Window window)
     {
-        Preferences preferences = Preferences.Current;
         Rect size = new(x: window.Left,
                         y: window.Top,
                         width: window.Width,
                         height: window.Height);
-        preferences.MainWindowSize = size;
-        preferences.Save();
+        m_Preferences.MainWindowSize = size;
+        m_Preferences.Save();
 
         this.Reset();
     }
@@ -123,10 +178,8 @@ partial class ViewModel : WindowViewModel
             return;
         }
 
-        GroupOverviewWindow.Window window = new();
-        GroupOverviewWindow.ViewModel model = (GroupOverviewWindow.ViewModel)window.DataContext;
-        model.Load(group);
-        window.ShowDialog();
+        m_GroupViewModel.Load(group);
+        m_GroupWindow.ShowDialog();
     }
 
     private void RequeryManagedGroups()
@@ -157,8 +210,7 @@ partial class ViewModel : WindowViewModel
         UserPrincipal user = UserPrincipal.Current;
         if (user.ContextType is not ContextType.Domain)
         {
-            MessageBox.Show(messageBoxText: Localization.Instance
-                                                        .UserIsNotPartOfDomain,
+            MessageBox.Show(messageBoxText: m_LocalizationService.LocalizationDictionary["UserIsNotPartOfDomain"],
                             caption: "Not part of domain",
                             button: MessageBoxButton.OK,
                             icon: MessageBoxImage.Error);
@@ -196,14 +248,12 @@ partial class ViewModel : WindowViewModel
         }
     }
 
-    private static IReadOnlyList<DirectoryEntry> GetGroups(String dn)
+    private IReadOnlyList<DirectoryEntry> GetGroups(String dn)
     {
-        Configuration configuration = Configuration.Current;
-        if (!ActiveDirectoryInterface.TryGetPrincipalByDN(dn: dn,
+        if (!m_ActiveDirectoryService.TryGetPrincipalByDN(distinguishedName: dn,
                                                           out DirectoryEntry? user))
         {
-            MessageBox.Show(messageBoxText: String.Format(format: Localization.Instance
-                                                                              .FailedToFindObject,
+            MessageBox.Show(messageBoxText: String.Format(format: m_LocalizationService.LocalizationDictionary["FailedToFindObject"],
                                                           arg0: dn),
                             caption: "Failed to find object",
                             button: MessageBoxButton.OK,
@@ -211,12 +261,11 @@ partial class ViewModel : WindowViewModel
             return Array.Empty<DirectoryEntry>();
         }
 
-        if (!ActiveDirectoryInterface.TryGetGroupsManagedByUser(user: user,
+        if (!m_ActiveDirectoryService.TryGetGroupsManagedByUser(user: user,
                                                                 groups: out IEnumerable<DirectoryEntry>? groups))
         {
-            MessageBox.Show(messageBoxText: String.Format(format: Localization.Instance
-                                                                              .FailedToFindAdsObject,
-                                                          arg0: configuration.ManagedGroupsDn),
+            MessageBox.Show(messageBoxText: String.Format(format: m_LocalizationService.LocalizationDictionary["FailedToFindAdsObject"],
+                                                          arg0: m_Configuration.ManagedGroupsDn),
                             caption: "Failed to open OU",
                             button: MessageBoxButton.OK,
                             icon: MessageBoxImage.Error);
@@ -256,17 +305,22 @@ partial class ViewModel : WindowViewModel
 
     private void WindowResized(Window window)
     {
-        Preferences preferences = Preferences.Current;
-        preferences.MainWindowSize = new()
+        m_Preferences.MainWindowSize = new()
         {
             X = window.Left,
             Y = window.Top,
             Width = window.Width,
             Height = window.Height
         };
-        preferences.Save();
+        m_Preferences.Save();
     }
 
+    private readonly IActiveDirectoryService m_ActiveDirectoryService;
+    private readonly IConfiguration m_Configuration;
+    private readonly ILocalizationService m_LocalizationService;
+    private readonly IPreferences m_Preferences;
+    private readonly GroupOverviewWindow.Window m_GroupWindow;
+    private readonly GroupOverviewWindow.ViewModel m_GroupViewModel;
     private readonly RelayCommand<Window> m_WindowLoadedCommand;
     private readonly RelayCommand<Window> m_WindowClosingCommand;
     private readonly RelayCommand m_ReloadListCommand;

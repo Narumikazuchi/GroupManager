@@ -2,7 +2,7 @@
 
 namespace Narumikazuchi.GroupManager;
 
-public sealed partial class Configuration
+public sealed partial class Configuration : IConfiguration
 {
     static Configuration()
     {
@@ -10,63 +10,30 @@ public sealed partial class Configuration
                                    "Narumikazuchi",
                                    "GroupManager");
         s_Directory = new DirectoryInfo(path);
-        path = Path.Combine(path,
+        path = Path.Combine(s_Directory.FullName,
                             "global.config");
-        s_File = new(path);
+        DefaultLocation = new(path);
     }
 
-    public void Save()
+    public Configuration()
     {
-        if (!s_Directory.Exists)
-        {
-            Directory.CreateDirectory(s_Directory.FullName);
-        }
-
-        using FileStream stream = new(path: s_File.FullName,
-                                      mode: FileMode.Create,
-                                      access: FileAccess.Write,
-                                      share: FileShare.Write);
-        using XmlTextWriter writer = new(w: stream,
-                                         encoding: Encoding.UTF8)
-        {
-            Formatting = Formatting.Indented,
-            Indentation = 4
-        };
-
-        writer.WriteStartElement("configuration");
-        writer.WriteAttributeString(localName: "locale",
-                                    value: this.DefaultLocale);
-
-        writer.WriteStartElement("userdn");
-        writer.WriteAttributeString(localName: "dn",
-                                    value: this.PrincipalsDn);
-        if (this.UseGroupsForPrincipals)
-        {
-            writer.WriteAttributeString(localName: "useGroup",
-                                        value: "true");
-        }
-        writer.WriteEndElement();
-        writer.WriteStartElement("groupdn");
-        writer.WriteAttributeString(localName: "dn",
-                                    value: this.ManagedGroupsDn);
-        if (this.UseGroupsForGroups)
-        {
-            writer.WriteAttributeString(localName: "useGroup",
-                                        value: "true");
-        }
-        writer.WriteEndElement();
-        writer.WriteEndElement();
-        writer.Flush();
+        m_File = DefaultLocation;
+    }
+    public Configuration(FileInfo file)
+    {
+        m_File = file;
     }
 
-    public static Boolean TryLoad()
+    public static Boolean TryLoad(FileInfo file,
+                                  [NotNullWhen(true)] out Configuration? configuration)
     {
-        if (!s_File.Exists)
+        if (!file.Exists)
         {
+            configuration = null;
             return false;
         }
 
-        using FileStream stream = new(path: s_File.FullName,
+        using FileStream stream = new(path: file.FullName,
                                       mode: FileMode.Open,
                                       access: FileAccess.Read,
                                       share: FileShare.Read);
@@ -105,6 +72,7 @@ public sealed partial class Configuration
                 dn = reader.GetAttribute("dn");
                 if (dn is null)
                 {
+                    configuration = null;
                     return false;
                 }
                 userDn = dn;
@@ -122,6 +90,7 @@ public sealed partial class Configuration
                 dn = reader.GetAttribute("dn");
                 if (dn is null)
                 {
+                    configuration = null;
                     return false;
                 }
                 groupDn = dn;
@@ -129,12 +98,7 @@ public sealed partial class Configuration
             }
         }
 
-        if (!Localization.AvailableLanguages.Any(x => x == locale))
-        {
-            locale = "en";
-        }
-
-        Current = new()
+        configuration = new()
         {
             DefaultLocale = locale,
             UseGroupsForPrincipals = useGroupForUsers,
@@ -146,11 +110,71 @@ public sealed partial class Configuration
         return true;
     }
 
-    public static Configuration Current
+    public static FileInfo DefaultLocation { get; }
+}
+
+// Non-Public
+partial class Configuration
+{
+    private static readonly DirectoryInfo s_Directory;
+    private readonly FileInfo m_File;
+}
+
+// IConfiguration
+partial class Configuration : IConfiguration
+{
+    public void CopyFrom(IConfiguration configuration)
     {
-        get;
-        set;
-    } = new();
+        this.DefaultLocale = configuration.DefaultLocale;
+        this.UseGroupsForPrincipals = configuration.UseGroupsForPrincipals;
+        this.PrincipalsDn = configuration.PrincipalsDn;
+        this.UseGroupsForGroups = configuration.UseGroupsForGroups;
+        this.ManagedGroupsDn = configuration.ManagedGroupsDn;
+    }
+
+    public void Save()
+    {
+        if (!s_Directory.Exists)
+        {
+            Directory.CreateDirectory(s_Directory.FullName);
+        }
+
+        using FileStream stream = new(path: m_File.FullName,
+                                      mode: FileMode.Create,
+                                      access: FileAccess.Write,
+                                      share: FileShare.Write);
+        using XmlTextWriter writer = new(w: stream,
+                                         encoding: Encoding.UTF8)
+        {
+            Formatting = Formatting.Indented,
+            Indentation = 4
+        };
+
+        writer.WriteStartElement("configuration");
+        writer.WriteAttributeString(localName: "locale",
+                                    value: this.DefaultLocale);
+
+        writer.WriteStartElement("userdn");
+        writer.WriteAttributeString(localName: "dn",
+                                    value: this.PrincipalsDn);
+        if (this.UseGroupsForPrincipals)
+        {
+            writer.WriteAttributeString(localName: "useGroup",
+                                        value: "true");
+        }
+        writer.WriteEndElement();
+        writer.WriteStartElement("groupdn");
+        writer.WriteAttributeString(localName: "dn",
+                                    value: this.ManagedGroupsDn);
+        if (this.UseGroupsForGroups)
+        {
+            writer.WriteAttributeString(localName: "useGroup",
+                                        value: "true");
+        }
+        writer.WriteEndElement();
+        writer.WriteEndElement();
+        writer.Flush();
+    }
 
     public String DefaultLocale
     {
@@ -181,11 +205,4 @@ public sealed partial class Configuration
         get;
         set;
     } = String.Empty;
-}
-
-// Non-Public
-partial class Configuration
-{
-    private static readonly DirectoryInfo s_Directory;
-    private static readonly FileInfo s_File;
 }

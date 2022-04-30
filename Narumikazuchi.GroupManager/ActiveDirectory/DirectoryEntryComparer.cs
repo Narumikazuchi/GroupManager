@@ -18,9 +18,13 @@ public sealed class DirectoryEntryComparer : IEqualityComparer<DirectoryEntry>
         return x.Guid.Equals(y.Guid);
     }
 
-    public Int32 GetHashCode([DisallowNull] DirectoryEntry obj) =>
-        obj.Guid
-           .GetHashCode();
+    public Int32 GetHashCode([DisallowNull] DirectoryEntry obj)
+    {
+        ArgumentNullException.ThrowIfNull(obj);
+
+        return obj.Guid
+                  .GetHashCode();
+    }
 
     public static DirectoryEntryComparer Default { get; } = new DirectoryEntryComparer();
 }
